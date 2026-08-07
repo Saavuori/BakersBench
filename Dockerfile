@@ -12,8 +12,10 @@ COPY package.json ./
 COPY js ./js
 COPY tests ./tests
 COPY tools ./tools
+COPY recipes ./recipes
 
-RUN node --test \
+RUN node tools/build-recipes.mjs --check \
+ && node --test \
  && node tools/check-links.mjs \
  && date -u +%Y-%m-%dT%H:%M:%SZ > /app/VERIFIED
 

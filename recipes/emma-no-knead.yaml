@@ -1,0 +1,101 @@
+# Italian no-knead bread
+#
+# Percentages are baker's percentages: every ingredient is a share of
+# total flour, so the flours always add up to 100.
+
+order: 40
+id: emma-no-knead
+name: Italian no-knead bread
+short: Italian no-knead
+family: Lean · Dutch oven
+unit:
+  one: loaf
+  many: loaves
+
+blurb: >
+  Flour, water, salt, yeast — and a choice of how much effort to spend.
+  Leave it six hours and do nothing, or fold it four times and bake sooner.
+
+notes: |
+  Emma's Goodies, "3 Ingredient Italian No Knead Bread": 420 g
+  flour, 300 g water, 8 g kosher salt, and either 3.5 g yeast for the zero-effort
+  six-hour version or 7 g for the stretch-and-fold one. Her written recipe carries
+  gram weights throughout, so no cup conversion was needed. This entry uses the
+  zero-effort dose.
+
+links:
+  - label: 3 Ingredient Italian No Knead Bread
+    source: Emma's Goodies · video
+    url: https://www.youtube.com/watch?v=3xtj9X1jDc0
+    video: true
+  - label: Written recipe
+    source: emmafontanella.com
+    url: https://www.emmafontanella.com/the-easiest-no-knead-bread
+
+# ---- Formula ----
+flours:
+  - name: All-purpose flour
+    pct: 100
+liquids:
+  - name: Lukewarm water
+    pct: 71.4
+    water: 1
+others:
+  - name: Kosher salt
+    pct: 1.9
+    kind: salt
+
+yeast:
+  # Always the INSTANT yeast figure. Other leavenings convert from it.
+  instant_pct: 0.83
+
+leavening:
+  default: instant
+  prefermented_flour:
+    levain: 0.2
+    poolish: 0.3
+    biga: 0.3
+
+# ---- Shape and size ----
+shape:
+  type: round
+  spread: 1
+  gap: 5
+  can_touch: false
+
+sizes:
+  - id: half
+    label: Half batch
+    g: 366
+  - id: full
+    label: Full batch
+    g: 732
+    default: true
+  - id: big
+    label: Large
+    g: 1000
+
+counts:
+  quick: [1, 2]
+  default: 1
+
+# ---- Timing ----
+schedule:
+  mix: 5
+  bulk:
+    direct: 360
+    preferment: 150
+  shape: 10
+  proof: 22
+
+bake:
+  temp: 230°C covered, then 200°C open
+  time: 30–35 min covered · 10 min open
+  steam: Dutch oven, 3 litres or bigger — the lid is the steam
+  internal: 96–99°C
+  minutes: 42
+  stages:
+    - label: Covered
+      min: 32
+    - label: Open
+      min: 10

@@ -1,0 +1,66 @@
+# Leavening options offered for every bread.
+#
+# `yeast_factor` converts from the recipe's instant-yeast baseline.
+# `ferment_factor` multiplies bulk and final proof.
+
+leavenings:
+  - id: levain
+    name: Sourdough levain
+    short_name: levain
+    tag: Wild
+    accent: rye
+    kind: preferment
+    desc: A built levain at 100% hydration. Slowest, sourest, best keeping.
+    ferment_factor: 2
+    hydration: 1
+    seed_ratio: 0.2
+    build_minutes: 300
+    pff_range: [5, 40]
+    pff_label: Prefermented flour
+    hint: >
+      Share of the total flour that ferments in the levain first. Higher means
+      faster and sourer.
+  - id: poolish
+    name: Poolish
+    tag: Hybrid
+    accent: rye
+    kind: preferment
+    desc: Loose 100% hydration preferment with a pinch of yeast. Overnight on the bench.
+    ferment_factor: 1
+    hydration: 1
+    preferment_yeast_pct: 0.1
+    build_minutes: 780
+    pff_range: [10, 50]
+    pff_label: Prefermented flour
+    hint: >
+      Classic baguette poolish is 30% of the flour, ripened 12–14 hours.
+  - id: biga
+    name: Biga
+    tag: Hybrid
+    accent: rye
+    kind: preferment
+    desc: Stiff 55% hydration preferment. Milder than poolish, stronger dough.
+    ferment_factor: 1
+    hydration: 0.55
+    preferment_yeast_pct: 0.3
+    build_minutes: 900
+    pff_range: [10, 50]
+    pff_label: Prefermented flour
+    hint: >
+      Ciabatta biga is 30% of the flour, ripened about 16 hours.
+  - id: instant
+    name: Instant yeast
+    tag: Direct
+    accent: ember
+    kind: direct
+    desc: Straight dough, same day. Mix it in dry with the flour.
+    ferment_factor: 1
+    yeast_factor: 1
+  - id: active-dry
+    name: Active dry yeast
+    tag: Direct
+    accent: ember
+    kind: direct
+    desc: A quarter more than instant, and bloom it in some of the liquid first.
+    ferment_factor: 1.05
+    yeast_factor: 1.25

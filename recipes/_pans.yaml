@@ -1,0 +1,57 @@
+# Pans offered in the pan-fit card.
+#
+# `edge_margin` is the clearance kept at every edge, because sheet pans
+# have sloped sides. All dimensions in centimetres.
+
+edge_margin: 1.0
+
+pans:
+  - id: quarter
+    name: Quarter sheet — 33 × 23 cm
+    type: rect
+    w: 33
+    h: 23
+  - id: half
+    name: Half sheet — 46 × 33 cm
+    type: rect
+    w: 46
+    h: 33
+    default: true
+  - id: threequarter
+    name: Two-thirds sheet — 53 × 33 cm
+    type: rect
+    w: 53
+    h: 33
+  - id: full
+    name: Full sheet — 66 × 46 cm
+    type: rect
+    w: 66
+    h: 46
+  - id: euro
+    name: Euro oven tray — 44 × 37 cm
+    type: rect
+    w: 44
+    h: 37
+  - id: square
+    name: Square tin — 23 × 23 cm
+    type: rect
+    w: 23
+    h: 23
+  - id: dutch24
+    name: Dutch oven — 24 cm round
+    type: round
+    d: 24
+  - id: dutch28
+    name: Dutch oven — 28 cm round
+    type: round
+    d: 28
+  - id: stone
+    name: Pizza stone — 36 cm round
+    type: round
+    d: 36
+  - id: custom
+    name: Custom size…
+    type: rect
+    w: 46
+    h: 33
+    custom: true

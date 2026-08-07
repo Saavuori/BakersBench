@@ -9,13 +9,6 @@
  * blog advice like "swap one packet of yeast for a cup of starter".
  */
 
-/* Oven time in minutes, used only to close out the schedule. */
-const BAKE_MINUTES = {
-  boule: 45, 'overnight-loaf': 30, 'jenny-no-knead': 42, 'emma-no-knead': 42,
-  'rye-batard': 40, baguette: 22, ciabatta: 24, 'dinner-rolls': 19,
-  'burger-buns': 17, pizza: 7
-};
-
 const Formula = (() => {
 
   const round = (n, dp = 0) => {
@@ -215,7 +208,7 @@ const Formula = (() => {
     steps.push({ label: 'Bulk', minutes: Math.round(span(s.bulk) * ff), kind: 'ferment' });
     steps.push({ label: 'Shape', minutes: span(s.shape), kind: 'work' });
     steps.push({ label: 'Final proof', minutes: Math.round(span(s.proof) * ff), kind: 'ferment' });
-    steps.push({ label: 'Bake', minutes: BAKE_MINUTES[recipe.id] || 30, kind: 'bake' });
+    steps.push({ label: 'Bake', minutes: recipe.bake.minutes || 30, kind: 'bake' });
 
     const totalMinutes = steps.reduce((a, b) => a + b.minutes, 0);
 

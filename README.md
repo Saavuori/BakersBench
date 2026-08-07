@@ -99,6 +99,9 @@ and active dry yeast. Every formula traces to a published source —
 [all of them are cited](docs/SOURCES.md), including the two places where a source
 was ambiguous and a judgment call had to be made.
 
+Each bread is a single [YAML file](recipes/README.md). Adding, changing or
+removing one is an edit to `recipes/*.yaml` followed by `npm run build`.
+
 ## What makes it more than a spreadsheet
 
 - **A pan diagram that does real geometry.** Circles are packed as both a square
@@ -122,14 +125,20 @@ was ambiguous and a judgment call had to be made.
 | [Sources](docs/SOURCES.md) | Every citation, and the judgment calls behind two of them |
 | [Development](docs/DEVELOPMENT.md) | Running it, testing it, the house style |
 | [Deployment](docs/DEPLOYMENT.md) | Docker, GitHub Pages, and any static host |
+| [Recipe files](recipes/README.md) | The YAML schema — every field, with examples |
 | [Contributing](CONTRIBUTING.md) | How to add a bread |
 | [Security](SECURITY.md) | Threat model and reporting |
 
 ## No dependencies, on purpose
 
-There is no build step, no bundler, no framework, and nothing in
-`node_modules` — `dependencies` and `devDependencies` are both empty. The tests
-run on Node's built-in runner; the app runs on the browser's built-in everything.
+There is no bundler, no framework, and nothing in `node_modules` —
+`dependencies` and `devDependencies` are both empty. The tests run on Node's
+built-in runner, the YAML parser is 200 lines in `tools/`, and the app runs on
+the browser's built-in everything.
+
+The one build step, `npm run build`, compiles `recipes/*.yaml` into
+`js/recipes.js`. It is a contributor step, not a user step: the generated file is
+committed, so the app still opens straight from disk.
 
 That is a deliberate trade. It costs some ergonomics and buys a supply chain of
 zero, an app that will still open in ten years, and a codebase where every line

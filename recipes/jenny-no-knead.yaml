@@ -1,0 +1,103 @@
+# Faster no-knead bread
+#
+# Percentages are baker's percentages: every ingredient is a share of
+# total flour, so the flours always add up to 100.
+
+order: 30
+id: jenny-no-knead
+name: Faster no-knead bread
+short: Faster no-knead
+family: Lean · same day
+unit:
+  one: loaf
+  many: loaves
+
+blurb: >
+  Stir it, leave it three hours, fold it once, bake it in a Dutch oven you
+  preheated from cold. Mixed to sliced in under four and a half hours.
+
+notes: |
+  Jenny Can Cook, "Faster No Knead Bread": 3 cups flour,
+  1.5 cups (355 g) hot water, 1 tsp (6 g) salt, 0.25 tsp (1 g) yeast.
+  CUP CAVEAT: her page puts 3 cups at 360-390 g, which against 355 g of water
+  computes to 93-99% hydration - and "it won't hold a shape" is the single most
+  common complaint on that recipe. This entry assumes a denser scoop (~433 g),
+  giving 82%, which is how the loaf actually behaves. If your cup weighs less
+  than that, drag the hydration slider up to match.
+
+links:
+  - label: Faster No Knead Bread
+    source: Jenny Can Cook · video
+    url: https://www.youtube.com/watch?v=I0t8ZAhb8lQ
+    video: true
+  - label: Written recipe
+    source: jennycancook.com
+    url: https://www.jennycancook.com/recipes/faster-no-knead-bread/
+
+# ---- Formula ----
+flours:
+  - name: Bread or all-purpose flour
+    pct: 100
+liquids:
+  - name: Hot water, 50°C max
+    pct: 82
+    water: 1
+others:
+  - name: Fine sea salt
+    pct: 1.4
+    kind: salt
+
+yeast:
+  # Always the INSTANT yeast figure. Other leavenings convert from it.
+  instant_pct: 0.23
+
+leavening:
+  default: instant
+  prefermented_flour:
+    levain: 0.2
+    poolish: 0.3
+    biga: 0.3
+
+# ---- Shape and size ----
+shape:
+  type: round
+  spread: 1
+  gap: 5
+  can_touch: false
+
+sizes:
+  - id: half
+    label: Half batch
+    g: 400
+  - id: full
+    label: Full batch
+    g: 795
+    default: true
+  - id: big
+    label: Large
+    g: 1000
+
+counts:
+  quick: [1, 2]
+  default: 1
+
+# ---- Timing ----
+schedule:
+  mix: 5
+  bulk:
+    direct: 180
+    preferment: 120
+  shape: 10
+  proof: 35
+
+bake:
+  temp: 230°C covered, then open
+  time: 30 min covered · 10–15 min open
+  steam: Dutch oven preheated from cold with the lid on — the lid is the steam
+  internal: 96–99°C
+  minutes: 42
+  stages:
+    - label: Covered
+      min: 30
+    - label: Open
+      min: 12

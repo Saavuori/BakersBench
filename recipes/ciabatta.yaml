@@ -1,0 +1,90 @@
+# Ciabatta
+#
+# Percentages are baker's percentages: every ingredient is a share of
+# total flour, so the flours always add up to 100.
+
+order: 70
+id: ciabatta
+name: Ciabatta
+short: Ciabatta
+family: Lean · high hydration
+unit:
+  one: ciabatta
+  many: ciabattas
+
+blurb: >
+  Built on a stiff biga, which is where the big irregular holes come from.
+  Handle it wet, fold it, and resist degassing at shaping.
+
+links:
+  - label: Rustic Italian Ciabatta
+    source: King Arthur Baking
+    url: https://www.kingarthurbaking.com/recipes/rustic-italian-ciabatta-recipe
+  - label: Ciabatta — the professional formula these numbers come from
+    source: King Arthur Baking
+    url: https://www.kingarthurbaking.com/pro/formulas/ciabatta
+
+# ---- Formula ----
+flours:
+  - name: Bread flour
+    pct: 100
+liquids:
+  - name: Water
+    pct: 76
+    water: 1
+others:
+  - name: Fine sea salt
+    pct: 2
+    kind: salt
+
+yeast:
+  # Always the INSTANT yeast figure. Other leavenings convert from it.
+  instant_pct: 1.2
+
+leavening:
+  default: biga
+  prefermented_flour:
+    levain: 0.2
+    poolish: 0.3
+    biga: 0.3
+
+# ---- Shape and size ----
+shape:
+  type: rod
+  areal_density: 1.17
+  gap: 4
+  can_touch: false
+
+sizes:
+  - id: roll
+    label: Roll
+    g: 120
+    length: 14
+  - id: std
+    label: Standard
+    g: 350
+    length: 25
+    default: true
+
+counts:
+  quick: [2, 4, 6]
+  default: 2
+
+# ---- Timing ----
+schedule:
+  mix: 25
+  bulk: 100
+  shape: 15
+  proof: 60
+
+bake:
+  temp: 230°C
+  time: 22–25 min
+  steam: Steam for the first 10 minutes
+  internal: 97–99°C
+  minutes: 24
+  stages:
+    - label: With steam
+      min: 10
+    - label: Dry
+      min: 13

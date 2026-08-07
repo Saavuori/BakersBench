@@ -1,0 +1,92 @@
+# Light rye bâtard
+#
+# Percentages are baker's percentages: every ingredient is a share of
+# total flour, so the flours always add up to 100.
+
+order: 50
+id: rye-batard
+name: Light rye bâtard
+short: Rye bâtard
+family: Lean · rustic
+unit:
+  one: bâtard
+  many: bâtards
+
+blurb: >
+  Thirty percent rye for a darker, moister crumb. Slack dough — shape it
+  with a light hand and give it a shorter final proof than you think.
+
+links:
+  - label: Sourdough Rye Bread
+    source: The Pantry Mama
+    url: https://pantrymama.com/sourdough-rye-bread-recipe/
+  - label: Sourdough 90% Rye — for going further
+    source: The Perfect Loaf
+    url: https://www.theperfectloaf.com/sourdough-90-rye-bread-recipe/
+
+# ---- Formula ----
+flours:
+  - name: Bread flour
+    pct: 70
+  - name: Medium rye flour
+    pct: 30
+liquids:
+  - name: Water
+    pct: 78
+    water: 1
+others:
+  - name: Fine sea salt
+    pct: 2
+    kind: salt
+
+yeast:
+  # Always the INSTANT yeast figure. Other leavenings convert from it.
+  instant_pct: 0.6
+
+leavening:
+  default: levain
+  prefermented_flour:
+    levain: 0.2
+    poolish: 0.3
+    biga: 0.3
+
+# ---- Shape and size ----
+shape:
+  type: rod
+  areal_density: 2
+  gap: 5
+  can_touch: false
+
+sizes:
+  - id: small
+    label: Small
+    g: 500
+    length: 26
+  - id: std
+    label: Standard
+    g: 800
+    length: 32
+    default: true
+
+counts:
+  quick: [1, 2, 3]
+  default: 1
+
+# ---- Timing ----
+schedule:
+  mix: 20
+  bulk: 130
+  shape: 20
+  proof: 75
+
+bake:
+  temp: 240°C falling to 215°C
+  time: 15 min steam · 25 min dry
+  steam: Heavy steam for the first 15 minutes
+  internal: 96–99°C
+  minutes: 40
+  stages:
+    - label: With steam
+      min: 15
+    - label: Dry
+      min: 25

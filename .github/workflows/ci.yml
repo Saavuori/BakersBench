@@ -28,6 +28,9 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
 
+      - name: Generated recipes.js matches recipes/*.yaml
+        run: node tools/build-recipes.mjs --check
+
       - name: Formula, packing and data contract tests
         run: node --test
 

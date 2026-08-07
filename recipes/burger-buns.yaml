@@ -1,0 +1,101 @@
+# Burger buns
+#
+# Percentages are baker's percentages: every ingredient is a share of
+# total flour, so the flours always add up to 100.
+
+order: 90
+id: burger-buns
+name: Burger buns
+short: Burger buns
+family: Enriched · soft
+unit:
+  one: bun
+  many: buns
+
+blurb: >
+  Sturdy enough to hold a patty without going to pieces. These spread wide
+  as they proof, so they need real space on the sheet.
+
+links:
+  - label: Beautiful Burger Buns
+    source: King Arthur Baking
+    url: https://www.kingarthurbaking.com/recipes/beautiful-burger-buns-recipe
+
+# ---- Formula ----
+flours:
+  - name: Bread flour
+    pct: 100
+liquids:
+  - name: Water
+    pct: 40
+    water: 1
+  - name: Whole milk
+    pct: 20
+    water: 0.87
+  - name: Egg
+    pct: 8
+    water: 0.75
+others:
+  - name: Butter, soft
+    pct: 10
+    kind: fat
+    water: 0.16
+  - name: Sugar
+    pct: 8
+    kind: sugar
+    water: 0
+  - name: Fine sea salt
+    pct: 2
+    kind: salt
+
+yeast:
+  # Always the INSTANT yeast figure. Other leavenings convert from it.
+  instant_pct: 1.4
+
+leavening:
+  default: instant
+  prefermented_flour:
+    levain: 0.2
+    poolish: 0.25
+    biga: 0.25
+
+# ---- Shape and size ----
+shape:
+  type: round
+  spread: 1.05
+  gap: 2
+  can_touch: true
+  touch_default: false
+  gap_when_separate: 2
+
+sizes:
+  - id: slider
+    label: Slider
+    g: 60
+  - id: std
+    label: Standard
+    g: 90
+    default: true
+  - id: large
+    label: Large
+    g: 140
+
+counts:
+  quick: [4, 6, 8]
+
+# ---- Timing ----
+schedule:
+  mix: 20
+  bulk: 80
+  shape: 20
+  proof: 60
+
+bake:
+  temp: 190°C
+  time: 15–18 min
+  steam: None. Egg wash and seeds before they go in.
+  internal: 88–92°C
+  minutes: 17
+  stages:
+    - label: Bake
+      min: 16

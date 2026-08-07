@@ -19,6 +19,11 @@
  * over the rim.
  */
 
+/* Calibration constant for the footprint model: centimetres per gram^(1/3) at
+ * 65% hydration. It lives here rather than with the recipe data because it
+ * describes the model, not any particular bread. */
+const FLOUR_SPREAD = 2.05;
+
 const Packing = (() => {
 
   const SQRT3_2 = Math.sqrt(3) / 2;

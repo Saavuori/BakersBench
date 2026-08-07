@@ -1,0 +1,91 @@
+# Neapolitan pizza
+#
+# Percentages are baker's percentages: every ingredient is a share of
+# total flour, so the flours always add up to 100.
+
+order: 100
+id: pizza
+name: Neapolitan pizza
+short: Pizza
+family: Lean · stretched
+unit:
+  one: pizza
+  many: pizzas
+
+blurb: >
+  Barely any yeast and a long cold ferment. Footprints here are the
+  stretched size, not a proofed ball — stretch to the number you pick.
+
+links:
+  - label: Neapolitan-Style Pizza Crust
+    source: King Arthur Baking
+    url: https://www.kingarthurbaking.com/recipes/neapolitan-style-pizza-crust-recipe
+
+# ---- Formula ----
+flours:
+  - name: 00 or bread flour
+    pct: 100
+liquids:
+  - name: Water
+    pct: 62
+    water: 1
+others:
+  - name: Fine sea salt
+    pct: 2.8
+    kind: salt
+
+yeast:
+  # Always the INSTANT yeast figure. Other leavenings convert from it.
+  instant_pct: 0.15
+
+leavening:
+  default: instant
+  prefermented_flour:
+    levain: 0.1
+    poolish: 0.2
+    biga: 0.25
+
+# ---- Shape and size ----
+shape:
+  type: round
+  spread: 1
+  gap: 2
+  can_touch: false
+
+sizes:
+  - id: p26
+    label: 26 cm
+    g: 200
+    fixed_diameter: 26
+  - id: p30
+    label: 30 cm
+    g: 250
+    fixed_diameter: 30
+    default: true
+  - id: p33
+    label: 33 cm
+    g: 300
+    fixed_diameter: 33
+
+counts:
+  quick: [1, 2, 4]
+  default: 1
+
+# ---- Timing ----
+schedule:
+  mix: 15
+  bulk: 120
+  shape: 10
+  proof: 240
+
+bake:
+  temp: As hot as your oven goes — 275°C+ on steel or stone
+  time: 5–8 min domestic · 90 s in a pizza oven
+  steam: None. Preheat the stone for a full hour.
+  internal: Bake by colour, not temperature
+  minutes: 7
+  stages:
+    - label: On steel
+      min: 7
+    - label: Pizza oven
+      min: 1.5

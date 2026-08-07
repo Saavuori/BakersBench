@@ -1,0 +1,90 @@
+# Country boule
+#
+# Percentages are baker's percentages: every ingredient is a share of
+# total flour, so the flours always add up to 100.
+
+order: 10
+id: boule
+name: Country boule
+short: Boule
+family: Lean · rustic
+unit:
+  one: boule
+  many: boules
+
+blurb: >
+  The default sourdough round. High enough hydration for an open crumb,
+  enough whole wheat to taste like something.
+
+links:
+  - label: Beginner's Sourdough Bread
+    source: The Perfect Loaf
+    url: https://www.theperfectloaf.com/beginners-sourdough-bread/
+
+# ---- Formula ----
+flours:
+  - name: Bread flour
+    pct: 85
+  - name: Whole wheat flour
+    pct: 15
+liquids:
+  - name: Water
+    pct: 76
+    water: 1
+others:
+  - name: Fine sea salt
+    pct: 2
+    kind: salt
+
+yeast:
+  # Always the INSTANT yeast figure. Other leavenings convert from it.
+  instant_pct: 0.5
+
+leavening:
+  default: levain
+  prefermented_flour:
+    levain: 0.2
+    poolish: 0.3
+    biga: 0.3
+
+# ---- Shape and size ----
+shape:
+  type: round
+  spread: 1
+  gap: 5
+  can_touch: false
+
+sizes:
+  - id: mini
+    label: Mini
+    g: 400
+  - id: std
+    label: Standard
+    g: 900
+    default: true
+  - id: large
+    label: Large
+    g: 1200
+
+counts:
+  quick: [1, 2, 3]
+  default: 1
+
+# ---- Timing ----
+schedule:
+  mix: 20
+  bulk: 150
+  shape: 25
+  proof: 90
+
+bake:
+  temp: 245°C covered, then 220°C open
+  time: 20 min lid on · 25 min lid off
+  steam: Dutch oven or a covered pan — the lid is the steam
+  internal: 96–99°C
+  minutes: 45
+  stages:
+    - label: Lid on
+      min: 20
+    - label: Lid off
+      min: 25

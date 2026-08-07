@@ -8,20 +8,27 @@ The second most valuable is **a correction to a number that is wrong**.
 ```bash
 git clone https://github.com/Saavuori/BakersBench.git
 cd BakersBench
-npm test          # 238 checks, no install step, ~0.5s
+npm test          # 271 checks, no install step, ~0.6s
 python serve.py 5178
 ```
 
-There is nothing to install. No `npm install`, no build, no framework.
+There is nothing to install — no `npm install`, no framework. The only build
+step is `npm run build`, which compiles `recipes/*.yaml` into `js/recipes.js`,
+and you only need it after changing recipe data.
 See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the detail.
 
 ---
 
 ## Adding a bread
 
-Two files: an object in `js/recipes.js`, and a portrait in `js/portraits.js`.
-The full contract is in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#adding-a-bread),
-and `tests/data.test.mjs` will tell you precisely what is missing.
+Two files: a YAML file in [`recipes/`](recipes/README.md), and a portrait in
+`js/portraits.js`. Then `npm run build` to regenerate `js/recipes.js`.
+
+**Never edit `js/recipes.js` by hand** — it is generated, a test will catch it,
+and your change would be lost on the next rebuild.
+
+[`recipes/README.md`](recipes/README.md) is the full field reference, and
+`tests/data.test.mjs` will tell you precisely what is missing.
 
 **The one rule that is not negotiable: cite your source.** Every formula in this
 library links to a published recipe. A bread with no citation will not be merged,

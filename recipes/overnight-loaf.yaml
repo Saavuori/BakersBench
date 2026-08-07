@@ -1,0 +1,104 @@
+# Overnight no-knead loaf
+#
+# Percentages are baker's percentages: every ingredient is a share of
+# total flour, so the flours always add up to 100.
+
+order: 20
+id: overnight-loaf
+name: Overnight no-knead loaf
+short: Overnight loaf
+family: Lean · overnight
+unit:
+  one: loaf
+  many: loaves
+
+blurb: >
+  Four ingredients, no kneading, and a cold overnight rise doing all the
+  flavour work. The batch divides into four small loaves, baked under a
+  second tray turned upside down so they steam themselves.
+
+notes: |
+  Food Language, "the new perfect recipe for overnight bread":
+  320 g bread flour, 220 g water, 6 g salt, 2 g dry yeast = 548 g, divided into
+  FOUR pieces of ~137 g. Converted to baker's percentages.
+  Method: rest 30 min, fold, rest 30 min, fold, 12 h+ in the fridge, then 30 min
+  to come to room temperature, divide, 10 min bench rest, shape, 30 min final
+  proof, bake 20 min covered at 230C + 10 min open at 200C.
+  The video quotes the alternative as 3 g fresh yeast; the dry figure is what
+  this formula is built on.
+
+links:
+  - label: The new perfect recipe for overnight bread
+    source: Food Language · video
+    url: https://www.youtube.com/watch?v=5iIJY5THCOU
+    video: true
+  - label: Printable recipe
+    source: food-language.com
+    url: https://food-language.com/recipes/amazing-overnight-fermentation-bread/
+
+# ---- Formula ----
+flours:
+  - name: Bread flour
+    pct: 100
+liquids:
+  - name: Water
+    pct: 68.8
+    water: 1
+others:
+  - name: Fine sea salt
+    pct: 1.9
+    kind: salt
+
+yeast:
+  # Always the INSTANT yeast figure. Other leavenings convert from it.
+  instant_pct: 0.63
+
+leavening:
+  default: instant
+  prefermented_flour:
+    levain: 0.2
+    poolish: 0.3
+    biga: 0.3
+
+# ---- Shape and size ----
+shape:
+  type: round
+  spread: 1
+  gap: 5
+  can_touch: false
+
+sizes:
+  - id: quarter
+    label: Small
+    g: 137
+    default: true
+  - id: half
+    label: Medium
+    g: 274
+  - id: whole
+    label: Large
+    g: 548
+
+counts:
+  quick: [2, 4, 8]
+
+# ---- Timing ----
+schedule:
+  mix: 5
+  bulk:
+    direct: 810
+    preferment: 150
+  shape: 25
+  proof: 30
+
+bake:
+  temp: 230°C covered, then 200°C open
+  time: 20 min covered · 10 min open
+  steam: A second tray inverted on top is the lid — they steam themselves
+  internal: 96–99°C
+  minutes: 30
+  stages:
+    - label: Covered
+      min: 20
+    - label: Open
+      min: 10

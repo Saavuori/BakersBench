@@ -1,0 +1,102 @@
+# Baguette
+#
+# Percentages are baker's percentages: every ingredient is a share of
+# total flour, so the flours always add up to 100.
+
+order: 60
+id: baguette
+name: Baguette
+short: Baguette
+family: Lean · shaped
+unit:
+  one: baguette
+  many: baguettes
+
+blurb: >
+  No kneading and barely any yeast — a long slow bulk does the work instead.
+  Watch the length against your pan; this is where most home bakes fail.
+
+notes: |
+  Mr Baguette's "5 minute baguette": 950 g flour, 730 g water, 16 g salt,
+  2 g yeast, 8-10 h bulk, four baguettes per batch. Converted to baker's
+  percentages. The very low yeast is the point - it is what the long bulk is
+  paying for.
+
+links:
+  - label: The 5 minute baguette
+    source: Mr Baguette · video
+    url: https://www.youtube.com/watch?v=Z-husjZkxHw
+    video: true
+  - label: Classic Baguettes — the poolish route
+    source: King Arthur Baking
+    url: https://www.kingarthurbaking.com/recipes/classic-baguettes-recipe
+
+# ---- Formula ----
+flours:
+  - name: Bread flour, 11.5% protein
+    pct: 100
+liquids:
+  - name: Water
+    pct: 76.8
+    water: 1
+others:
+  - name: Fine sea salt
+    pct: 1.7
+    kind: salt
+
+yeast:
+  # Always the INSTANT yeast figure. Other leavenings convert from it.
+  instant_pct: 0.21
+
+leavening:
+  default: instant
+  prefermented_flour:
+    levain: 0.15
+    poolish: 0.3
+    biga: 0.3
+
+# ---- Shape and size ----
+shape:
+  type: rod
+  areal_density: 1.05
+  target_width: 6
+  gap: 4
+  can_touch: false
+
+sizes:
+  - id: fit
+    label: Fit my pan
+    fit_to_pan: true
+    default: true
+  - id: demi
+    label: Demi
+    g: 210
+    length: 32
+  - id: full
+    label: Full batch
+    g: 425
+    length: 50
+
+counts:
+  quick: [2, 3, 4]
+
+# ---- Timing ----
+schedule:
+  mix: 5
+  bulk:
+    direct: 540
+    preferment: 110
+  shape: 10
+  proof: 45
+
+bake:
+  temp: 250°C falling to 235°C
+  time: 12 min steam · 8–10 min dry
+  steam: Hard steam at load, vent for the last third
+  internal: 96–98°C
+  minutes: 22
+  stages:
+    - label: With steam
+      min: 12
+    - label: Dry
+      min: 9
