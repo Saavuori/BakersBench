@@ -1,0 +1,51 @@
+name: Add or correct a recipe
+description: Propose a new bread, or fix numbers in one we already have.
+labels: [recipe]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every formula in this app traces to a published source. The most useful
+        thing you can bring is a citation with weights in grams.
+
+  - type: input
+    id: bread
+    attributes:
+      label: Which bread
+      placeholder: e.g. Ciabatta, or a new one
+    validations: { required: true }
+
+  - type: input
+    id: source
+    attributes:
+      label: Source
+      description: A link to the recipe. Videos are fine if the description carries the weights.
+      placeholder: https://…
+    validations: { required: true }
+
+  - type: textarea
+    id: formula
+    attributes:
+      label: The formula, in grams
+      description: Flour, water, salt, yeast or starter, and anything else. Percentages are welcome but grams are what we convert from.
+      placeholder: |
+        420 g bread flour
+        300 g water
+        8 g salt
+        3.5 g instant yeast
+        → one 732 g loaf
+    validations: { required: true }
+
+  - type: textarea
+    id: shape
+    attributes:
+      label: Shape and size
+      description: How many pieces, how heavy, and how they are baked (tin, sheet, Dutch oven).
+
+  - type: textarea
+    id: ambiguity
+    attributes:
+      label: Anything ambiguous in the source
+      description: |
+        Cup measures, conflicting yeast figures, a hydration that looks wrong.
+        Worth flagging — we write these judgment calls down rather than hide them.

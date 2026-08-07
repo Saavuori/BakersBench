@@ -1,0 +1,14 @@
+# Normalise everything to LF in the repository. The shell script and the
+# Dockerfile break outright with CRLF, and CI runs on Linux.
+* text=auto eol=lf
+
+# PowerShell is the one thing that genuinely wants CRLF.
+*.ps1 text eol=crlf
+
+# Never touch these.
+*.png  binary
+*.jpg  binary
+*.webp binary
+*.ico  binary
+*.woff binary
+*.woff2 binary

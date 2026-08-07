@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22', '24']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Formula, packing and data contract tests
+        run: node --test "tests/*.test.mjs"
+
+      - name: Citations are well-formed
+        run: node tools/check-links.mjs
+
+  static-checks:
+    name: Static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Every script and stylesheet the page asks for exists
+        run: node tools/check-assets.mjs
+
+      - name: No stray debugging left behind
+        run: |
+          if grep -rnE '\b(debugger|console\.(log|debug))\b' js/ ; then
+            echo "::error::Remove debugger statements and console logging from js/"
+            exit 1
+          fi
+          echo "Clean."
+
+  docker:
+    name: Container image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build (runs the test stage)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: bakers-bench:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Boot it and check it answers
+        run: |
+          docker run -d --name bb -p 8080:8080 bakers-bench:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8080/ >/dev/null; then
+              echo "Serving after ${i}s."
+              break
+            fi
+            if [ "$i" = 30 ]; then
+              echo "::error::Container never became ready"
+              docker logs bb
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Serves the whole app, not just the shell
+        run: |
+          set -e
+          for path in / /styles.css /js/app.js /js/recipes.js /js/formula.js \
+                      /js/packing.js /js/portraits.js /js/timer.js; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:8080${path}")
+            echo "  $code $path"
+            [ "$code" = 200 ] || { echo "::error::$path returned $code"; exit 1; }
+          done
+
+      - name: Security headers are present
+        run: |
+          set -e
+          headers=$(curl -sSI http://localhost:8080/)
+          echo "$headers"
+          for h in "x-content-type-options" "content-security-policy" "referrer-policy"; do
+            echo "$headers" | grep -iq "$h" || { echo "::error::missing $h"; exit 1; }
+          done
+
+      - name: Stop
+        if: always()
+        run: docker rm -f bb || true

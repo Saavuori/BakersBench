@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baker's Bench — formula &amp; pan calculator</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 15c0-4.4 4-8 9-8s9 3.6 9 8v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/>
+      <path d="M8.5 8.5 7 16M12 7.5 12 16M15.5 8.5 17 16" class="score"/>
+    </svg>
+    <div>
+      <h1>Baker's Bench</h1>
+      <p class="tagline">Scale any formula. Know what fits the pan.</p>
+    </div>
+  </div>
+  <button id="themeToggle" class="ghost-btn" type="button" aria-label="Switch colour theme">
+    <span class="theme-icon" aria-hidden="true"></span><span id="themeLabel">Night</span>
+  </button>
+</header>
+
+<header class="stickyhead">
+  <!-- Its own strip, so the bread rail keeps the full width. Only exists while
+       a countdown is actually in progress. -->
+  <div class="mini-timer" id="miniTimer" hidden>
+    <div class="mini-inner">
+      <button type="button" class="mini-face" id="miniFace" title="Jump to the timer">
+        <svg class="mini-ring" id="miniRing" viewBox="0 0 34 34" aria-hidden="true"></svg>
+        <span class="mini-text">
+          <b class="mono" id="miniClock">00:00</b>
+          <small id="miniLabel">Timer</small>
+        </span>
+      </button>
+      <span class="mini-spacer"></span>
+      <button type="button" class="mini-btn mini-stop" id="miniStop" hidden>Stop the alarm</button>
+      <button type="button" class="mini-btn" id="miniToggle" aria-label="Pause the timer">Pause</button>
+      <button type="button" class="mini-btn mini-icon" id="miniFull" aria-label="Show the timer fullscreen" title="Fullscreen">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4Zm11-5h5v5h-2V6h-3V4ZM4 15h2v3h3v2H4v-5Zm14 0h2v5h-5v-2h3v-3Z"/></svg>
+      </button>
+    </div>
+    <span class="mini-bar" id="miniBar"></span>
+  </div>
+
+  <nav class="breadrail" aria-label="Choose a bread">
+    <div class="breadrail-row">
+      <div class="breadrail-inner" id="breadRail" role="tablist"></div>
+    </div>
+  </nav>
+</header>
+
+<!-- Fullscreen timer -->
+<div class="timer-full" id="timerFull" hidden role="dialog" aria-modal="true" aria-label="Oven timer, fullscreen">
+  <div class="tf-inner">
+    <p class="tf-recipe" id="tfRecipe"></p>
+    <p class="tf-label" id="tfLabel">Timer</p>
+    <b class="tf-clock mono" id="tfClock">00:00</b>
+    <div class="tf-bar"><span id="tfBar"></span></div>
+    <p class="tf-done" id="tfDone" hidden>Time's up</p>
+    <div class="tf-actions">
+      <button type="button" class="btn-primary" id="tfToggle">Pause</button>
+      <button type="button" class="btn-ghost" id="tfReset">Reset</button>
+      <button type="button" class="btn-ghost" id="tfExit">Exit fullscreen</button>
+    </div>
+  </div>
+</div>
+
+<main class="bench">
+
+  <!-- ───────────── CONTROLS ───────────── -->
+  <section class="col-controls" aria-label="Bake settings">
+
+    <div class="card">
+      <div class="card-head">
+        <h2 class="eyebrow">Shape &amp; count</h2>
+      </div>
+
+      <div class="field" id="sizeField">
+        <label class="field-label">Piece size</label>
+        <div class="seg" id="sizeSeg" role="radiogroup" aria-label="Piece size"></div>
+        <p class="field-hint" id="sizeHint"></p>
+      </div>
+
+      <div class="field" id="countField">
+        <label class="field-label" for="countInput">How many</label>
+        <div class="counter">
+          <button class="step" id="countMinus" type="button" aria-label="One fewer">−</button>
+          <input id="countInput" class="count-input" type="number" min="1" max="200" step="1" value="8"
+                 inputmode="numeric" aria-label="Number of pieces">
+          <button class="step" id="countPlus" type="button" aria-label="One more">+</button>
+          <div class="quick" id="quickCounts"></div>
+        </div>
+      </div>
+
+      <div class="field" id="thicknessField" hidden>
+        <label class="field-label">Thickness</label>
+        <div class="seg" id="thicknessSeg" role="radiogroup" aria-label="Thickness"></div>
+        <p class="field-hint">Pan-filling bread — the pan sets the dough weight.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2 class="eyebrow">Dough</h2>
+        <button type="button" class="reset-btn" id="hydraReset" hidden>Reset</button>
+      </div>
+      <div class="field">
+        <label class="field-label" for="hydraRange">
+          <span>Hydration</span>
+          <output class="mono-out mono-out-ember" id="hydraOut">76%</output>
+        </label>
+        <input id="hydraRange" type="range" min="50" max="95" step="0.5" value="76"
+               class="range range-ember">
+        <p class="field-hint" id="hydraHint"></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2 class="eyebrow">Leavening</h2>
+      </div>
+      <div class="leaven-list" id="leavenList" role="radiogroup" aria-label="Leavening"></div>
+
+      <div class="field sub" id="prefermentField">
+        <label class="field-label" for="pffRange">
+          <span id="pffLabel">Prefermented flour</span>
+          <output class="mono-out" id="pffOut">20%</output>
+        </label>
+        <input id="pffRange" type="range" min="5" max="40" step="1" value="20" class="range range-rye">
+        <p class="field-hint" id="prefermentHint"></p>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ───────────── OUTPUT ───────────── -->
+  <section class="col-output">
+
+    <!-- What you're making -->
+    <div class="card card-hero">
+      <figure class="portrait" id="portrait"></figure>
+      <div class="hero-copy">
+        <p class="hero-family" id="recipeFamily"></p>
+        <h2 class="hero-name" id="recipeName"></h2>
+        <p class="hero-blurb" id="recipeBlurb"></p>
+        <div class="hero-links">
+          <p class="hero-links-head">Recipes this formula came from</p>
+          <ul id="recipeLinks"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Signature: the pan -->
+    <div class="card card-pan">
+      <div class="card-head">
+        <h2 class="eyebrow">Pan fit</h2>
+        <span class="chip-note" id="panSpec"></span>
+      </div>
+
+      <div class="pan-picker">
+        <div class="pan-picker-main">
+          <label class="field-label" for="panSelect">Baking sheet</label>
+          <select id="panSelect" class="select"></select>
+        </div>
+        <div class="pan-picker-custom two-up" id="customPanField" hidden>
+          <div>
+            <label class="field-label" for="panW">Width</label>
+            <div class="unit-input"><input id="panW" type="number" min="10" max="120" step="0.5" value="46"><span>cm</span></div>
+          </div>
+          <div>
+            <label class="field-label" for="panH">Depth</label>
+            <div class="unit-input"><input id="panH" type="number" min="10" max="120" step="0.5" value="33"><span>cm</span></div>
+          </div>
+        </div>
+        <label class="switch pan-picker-touch" id="touchSwitchWrap">
+          <input type="checkbox" id="touchSwitch">
+          <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+          <span class="switch-text">
+            <strong id="touchTitle">Let them touch</strong>
+            <small id="touchHint">Pull-apart rolls, soft sides</small>
+          </span>
+        </label>
+      </div>
+
+      <div class="verdict" id="verdict">
+        <div class="verdict-flag" id="verdictFlag" aria-hidden="true"></div>
+        <div class="verdict-copy">
+          <p class="verdict-line" id="verdictLine"></p>
+          <p class="verdict-sub" id="verdictSub"></p>
+        </div>
+      </div>
+
+      <div class="pan-stage">
+        <svg id="panSvg" role="img" aria-labelledby="panSvgTitle"><title id="panSvgTitle"></title></svg>
+      </div>
+
+      <div class="pan-legend" id="panLegend"></div>
+    </div>
+
+    <!-- Formula -->
+    <div class="card">
+      <div class="card-head">
+        <h2 class="eyebrow">Formula</h2>
+        <div class="head-stats">
+          <span class="stat"><b class="mono" id="statDough">—</b><small>total dough</small></span>
+          <span class="stat"><b class="mono" id="statFlour">—</b><small>total flour</small></span>
+        </div>
+      </div>
+
+      <div class="formula-grid">
+        <div class="formula-tables" id="formulaTables"></div>
+        <aside class="hydra">
+          <svg id="hydraDial" viewBox="0 0 120 84" aria-hidden="true"></svg>
+          <div class="hydra-read">
+            <b class="mono" id="hydraValue">—</b>
+            <small id="hydraBand">—</small>
+          </div>
+          <p class="hydra-note" id="hydraNote"></p>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Schedule -->
+    <div class="card">
+      <div class="card-head">
+        <h2 class="eyebrow">Schedule</h2>
+        <div class="head-stats">
+          <label class="start-at">
+            <small>Start at</small>
+            <input type="time" id="startTime" value="08:00" class="time-input">
+          </label>
+          <span class="stat"><b class="mono" id="statTotalTime">—</b><small>to out of oven</small></span>
+        </div>
+      </div>
+      <div class="timeline" id="timeline"></div>
+      <div class="bakebox" id="bakeBox"></div>
+    </div>
+
+    <!-- Oven timer -->
+    <div class="card card-timer" id="timerCard">
+      <div class="card-head">
+        <h2 class="eyebrow">Oven timer</h2>
+        <span class="chip-note" id="timerNote">Counts down even in a background tab</span>
+      </div>
+
+      <div class="timer">
+        <div class="timer-dial">
+          <svg id="timerRing" viewBox="0 0 132 132" aria-hidden="true"></svg>
+          <div class="timer-read">
+            <b class="mono" id="timerClock">00:00</b>
+            <small id="timerLabel">Pick a stage</small>
+          </div>
+        </div>
+
+        <div class="timer-side">
+          <p class="field-label" id="timerPresetsLabel">Stages for this bake</p>
+          <div class="timer-presets" id="timerPresets"></div>
+
+          <div class="timer-nudge" id="timerNudge">
+            <button type="button" data-add="-60">−1 min</button>
+            <button type="button" data-add="60">+1 min</button>
+            <button type="button" data-add="300">+5 min</button>
+          </div>
+
+          <div class="timer-actions">
+            <button type="button" class="btn-primary" id="timerToggle">Start</button>
+            <button type="button" class="btn-ghost" id="timerReset">Reset</button>
+            <button type="button" class="btn-ghost btn-icon" id="timerFullBtn"
+                    aria-label="Show the timer fullscreen" title="Fullscreen">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4Zm11-5h5v5h-2V6h-3V4ZM4 15h2v3h3v2H4v-5Zm14 0h2v5h-5v-2h3v-3Z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p class="timer-done" id="timerDone" hidden>
+        <span>Time's up — <b id="timerDoneLabel"></b> finished.</span>
+        <button type="button" class="btn-ghost" id="timerStop">Stop the alarm</button>
+      </p>
+    </div>
+
+  </section>
+</main>
+
+<footer class="foot">
+  <p>Percentages are baker's percentages — every ingredient is a share of total flour, so flour always reads 100%.
+     Footprints are modelled from dough weight and hydration, then packed with real geometry. Treat them as close guidance, not a guarantee: your shaping and proof are the last word.</p>
+</footer>
+
+<script src="js/recipes.js"></script>
+<script src="js/portraits.js"></script>
+<script src="js/formula.js"></script>
+<script src="js/packing.js"></script>
+<script src="js/timer.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

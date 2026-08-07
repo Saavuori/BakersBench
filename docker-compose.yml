@@ -1,0 +1,27 @@
+services:
+  bakers-bench:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bakers-bench:local
+    container_name: bakers-bench
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The base image already runs as an unprivileged user.
+    user: "101:101"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s

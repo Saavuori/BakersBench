@@ -1,0 +1,17 @@
+.git
+.github
+.claude
+node_modules
+docs
+*.md
+!README.md
+install.sh
+install.ps1
+docker-compose.yml
+Dockerfile
+.dockerignore
+.gitignore
+.editorconfig
+serve.py
+__pycache__
+*.pyc

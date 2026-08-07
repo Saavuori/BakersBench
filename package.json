@@ -1,0 +1,32 @@
+{
+  "name": "bakers-bench",
+  "version": "1.0.0",
+  "description": "Bread formula and pan-fit calculator. Scale any recipe by baker's percentages and find out what actually fits your tin.",
+  "keywords": ["baking", "bread", "sourdough", "bakers-percentage", "hydration", "calculator"],
+  "homepage": "https://saavuori.github.io/BakersBench/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Saavuori/BakersBench.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Saavuori/BakersBench/issues"
+  },
+  "license": "MIT",
+  "private": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "python serve.py 5178",
+    "serve": "python serve.py 5178",
+    "test": "node --test \"tests/*.test.mjs\"",
+    "test:watch": "node --test --watch \"tests/*.test.mjs\"",
+    "check": "npm run test && npm run check:links",
+    "check:links": "node tools/check-links.mjs",
+    "docker:build": "docker build -t bakers-bench:local .",
+    "docker:run": "docker run --rm -p 8080:8080 bakers-bench:local",
+    "docker:up": "docker compose up --build"
+  },
+  "devDependencies": {},
+  "dependencies": {}
+}

@@ -1,0 +1,69 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race; let a newer commit supersede an in-flight one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify before publishing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test "tests/*.test.mjs"
+      - run: node tools/check-assets.mjs
+      - run: node tools/check-links.mjs
+
+  build:
+    name: Build site
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble the site
+        run: |
+          mkdir -p site
+          cp index.html styles.css site/
+          cp -r js site/
+          # Pages would otherwise run the upload through Jekyll, which strips
+          # directories it considers special and rewrites nothing we want.
+          touch site/.nojekyll
+
+      - name: Stamp the build
+        run: |
+          sha=$(git rev-parse --short HEAD)
+          date=$(date -u +%Y-%m-%d)
+          sed -i "s|</body>|<!-- build ${sha} · ${date} --></body>|" site/index.html || true
+          echo "Built ${sha} on ${date}"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
