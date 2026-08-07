@@ -32,7 +32,7 @@ multi-file apps, and some devtools features are disabled. Use the server.
 ## Tests
 
 ```bash
-npm test                 # node --test "tests/*.test.mjs"
+npm test                 # node --test
 npm run test:watch
 npm run check            # tests + citation checks
 node tools/check-assets.mjs

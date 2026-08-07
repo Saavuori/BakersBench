@@ -52,7 +52,7 @@ PY=python3; have python3 || PY=python
 if [ "$HAS_NODE" = 1 ]; then
   echo
   say "Running the test suite…"
-  if node --test "$APP_DIR/tests/"*.test.mjs >/tmp/bb-test.log 2>&1; then
+  if node --test >/tmp/bb-test.log 2>&1; then
     ok "$(grep -c '^✔' /tmp/bb-test.log || echo 'all') checks passed"
   else
     tail -30 /tmp/bb-test.log

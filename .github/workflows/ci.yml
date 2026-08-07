@@ -29,7 +29,7 @@ jobs:
           node-version: ${{ matrix.node }}
 
       - name: Formula, packing and data contract tests
-        run: node --test "tests/*.test.mjs"
+        run: node --test
 
       - name: Citations are well-formed
         run: node tools/check-links.mjs
@@ -99,14 +99,26 @@ jobs:
             [ "$code" = 200 ] || { echo "::error::$path returned $code"; exit 1; }
           done
 
-      - name: Security headers are present
+      # Checked on an asset as well as the document: nginx drops inherited
+      # add_header directives in any location that declares its own, so a
+      # document-only check would miss exactly the bug this guards against.
+      - name: Security headers are present on every response
         run: |
           set -e
-          headers=$(curl -sSI http://localhost:8080/)
-          echo "$headers"
-          for h in "x-content-type-options" "content-security-policy" "referrer-policy"; do
-            echo "$headers" | grep -iq "$h" || { echo "::error::missing $h"; exit 1; }
+          fail=0
+          for path in / /index.html /styles.css /js/app.js; do
+            headers=$(curl -sSI "http://localhost:8080${path}")
+            for h in x-content-type-options content-security-policy \
+                     referrer-policy x-frame-options cache-control; do
+              if echo "$headers" | grep -iq "^${h}:"; then
+                echo "  ok   $path  $h"
+              else
+                echo "::error::$path is missing $h"
+                fail=1
+              fi
+            done
           done
+          exit $fail
 
       - name: Stop
         if: always()

@@ -56,7 +56,7 @@ if ($hasNode) {
     Write-Host ""
     Write-Host "  Running the test suite..."
     $log = Join-Path $env:TEMP 'bb-test.log'
-    & node --test "$AppDir/tests/*.test.mjs" *> $log
+    & node --test *> $log
     if ($LASTEXITCODE -eq 0) {
         $passed = (Select-String -Path $log -Pattern '^ok ' -AllMatches).Count
         Write-Ok "test suite passed"

@@ -13,7 +13,7 @@ COPY js ./js
 COPY tests ./tests
 COPY tools ./tools
 
-RUN node --test "tests/*.test.mjs" \
+RUN node --test \
  && node tools/check-links.mjs \
  && date -u +%Y-%m-%dT%H:%M:%SZ > /app/VERIFIED
 
