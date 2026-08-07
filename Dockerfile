@@ -22,7 +22,7 @@ RUN node tools/build-recipes.mjs --check \
 # ── 2. Serve ─────────────────────────────────────────────────────────────────
 # nginx-unprivileged already runs as a non-root user and listens on 8080, so
 # there is no chown/pid juggling and no capabilities to drop afterwards.
-FROM nginxinc/nginx-unprivileged:1.27-alpine AS runtime
+FROM nginxinc/nginx-unprivileged:1.31-alpine AS runtime
 
 LABEL org.opencontainers.image.title="Baker's Bench" \
       org.opencontainers.image.description="Bread formula and pan-fit calculator" \
