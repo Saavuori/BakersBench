@@ -64,10 +64,14 @@ for (const c of CAPACITY_CASES) {
   });
 }
 
+/* This case is about pan geometry, not about any recipe's data, so it states
+   the 50 cm length itself. It used to read the baguette's `full` size, which
+   silently made the test a hostage to that recipe: when the size was corrected
+   to the tray length the source implies, the test failed without the geometry
+   having changed at all. */
 test('a 50 cm baguette does not fit a 46 cm half sheet, but does fit a full sheet', () => {
   const recipe = byId('baguette');
-  const size = recipe.sizes.find(s => s.id === 'full');
-  const footprint = footprintOf(recipe, size);
+  const footprint = Packing.pieceFootprint(recipe, { g: 425, length: 50 }, hydrationOf(recipe));
   const gap = Packing.pieceGap(recipe, false);
 
   const half = Packing.fit({ pan: PANS.find(p => p.id === 'half'), footprint, gap, requested: 1 });
@@ -77,6 +81,22 @@ test('a 50 cm baguette does not fit a 46 cm half sheet, but does fit a full shee
 
   const full = Packing.fit({ pan: PANS.find(p => p.id === 'full'), footprint, gap, requested: 1 });
   assert.ok(full.capacity >= 1, 'should fit a full sheet');
+});
+
+/* The batch as published: four 425 g pieces, and they need more than one home
+   half sheet. This is the answer the card exists to give for this recipe. */
+test('the baguette batch takes two half sheets, or one full sheet', () => {
+  const recipe = byId('baguette');
+  const size = recipe.sizes.find(s => s.id === 'full');
+  const footprint = footprintOf(recipe, size);
+  const gap = Packing.pieceGap(recipe, false);
+
+  const half = Packing.fit({ pan: PANS.find(p => p.id === 'half'), footprint, gap, requested: 4 });
+  assert.ok(half.capacity >= 1, 'a batch piece must at least fit the default pan');
+  assert.equal(half.pansNeeded, 2, `expected 2 half sheets, got ${half.pansNeeded}`);
+
+  const full = Packing.fit({ pan: PANS.find(p => p.id === 'full'), footprint, gap, requested: 4 });
+  assert.ok(full.fits, 'all four should fit a full sheet');
 });
 
 test('letting rolls touch fits at least as many as keeping them apart', () => {

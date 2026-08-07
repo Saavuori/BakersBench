@@ -36,11 +36,26 @@ channel's own written recipe, then converted.
 ### Mr Baguette — "The 5 minute baguette"
 
 950 g flour · 730 g water · 16 g salt · 2 g yeast → **76.8% hydration, 1.7% salt,
-0.21% yeast**, four baguettes per batch.
+0.21% yeast**, four baguettes per batch — 1 698 g of dough, 425 g a piece.
 
 The very low yeast is bought with an 8–10 hour bulk, which is why this recipe's
 schedule looks nothing like the King Arthur poolish version also linked above.
 Both are good; they are different methods.
+
+The description gives the timeline outright: **2 min mixing, 8–10 h rising,
+3 min shaping, 25 min baking at 250 °C.** There is no final proof — shaped
+loaves go straight into a preheated oven — and no steam-then-dry split; on steam
+he says only that you can use the oven's steam function if it has one. The 15 min
+"final proof" in the schedule is the preheat with the baguettes waiting, and is
+labelled as a judgment call in the recipe's `notes:`.
+
+Two more things the description settles: the video says 900 g flour and the
+description corrects it to **950 g** (he could not re-cut the video, so the
+subtitles were fixed instead), and the batch may be divided into 2, 3, 4 or 5 —
+four is his own default and is what the app opens on.
+
+Length is the one number the source never gives. Four baguettes go on one home
+oven tray, so 40 cm is the ceiling; that is where the `full` size comes from.
 
 ### Food Language — overnight bread
 
