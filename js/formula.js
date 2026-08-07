@@ -198,12 +198,12 @@ const Formula = (() => {
        straight-dough version leans on a very long bulk (see the baguette). */
     const span = v => (typeof v === 'number' ? v : v[leaven.kind] ?? v.direct);
     const steps = [];
-    if (preferment) {
-      steps.push({
-        label: leaven.id === 'levain' ? 'Build levain' : `Ripen ${leaven.name.toLowerCase()}`,
-        minutes: leaven.buildMinutes, kind: 'ferment'
-      });
-    }
+    /* The preferment is deliberately NOT a step. Building a levain is a job you
+       do the day before and walk away from, so folding it into the timeline
+       pushes every clock time wrong and makes the total read as if you were
+       standing at the bench for fifteen hours. It is reported separately as
+       `aheadMinutes`, and the formula card already says how far ahead. */
+    const aheadMinutes = preferment ? leaven.buildMinutes : 0;
     steps.push({ label: 'Mix', minutes: span(s.mix), kind: 'work' });
     steps.push({ label: 'Bulk', minutes: Math.round(span(s.bulk) * ff), kind: 'ferment' });
     steps.push({ label: 'Shape', minutes: span(s.shape), kind: 'work' });
@@ -216,7 +216,7 @@ const Formula = (() => {
     const actual = finalRows.reduce((a, r) => a + r.g, 0);
 
     return {
-      leaven, preferment, finalRows, warnings, steps, totalMinutes,
+      leaven, preferment, finalRows, warnings, steps, totalMinutes, aheadMinutes,
       totalFlour: F,
       totalDough: actual,
       hydration: totalWaterPct,

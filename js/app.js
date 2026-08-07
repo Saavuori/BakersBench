@@ -108,13 +108,18 @@ function dur(min) {
   return `${h} h ${String(m).padStart(2, '0')}`;
 }
 
+/* `addMin` may be negative — the preferment is mixed before the start time, so
+   its clock reading can land on the previous day. Count the day offset from the
+   elapsed milliseconds rather than off the calendar date, which only works
+   forwards and within one month. */
 function clockFrom(start, addMin) {
   const [hh, mm] = start.split(':').map(Number);
-  const t = new Date(2000, 0, 1, hh || 0, mm || 0);
-  t.setMinutes(t.getMinutes() + addMin);
-  const day = t.getDate() - 1;
-  const s = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
-  return day > 0 ? `${s}⁺${day}` : s;
+  const mins = (hh || 0) * 60 + (mm || 0) + addMin;
+  const day = Math.floor(mins / 1440);
+  const inDay = mins - day * 1440;
+  const s = `${String(Math.floor(inDay / 60)).padStart(2, '0')}:` +
+            `${String(inDay % 60).padStart(2, '0')}`;
+  return day > 0 ? `${s}⁺${day}` : day < 0 ? `${s}⁻${-day}` : s;
 }
 
 /* ── Control rendering ───────────────────────────────────────────────── */
@@ -725,7 +730,19 @@ function renderSchedule(m) {
     </div>`;
   }).join('');
 
+  /* The preferment sits outside the timeline (see formula.js), so say so once,
+     in clock time, rather than leaving the baker to work backwards from "5 h
+     ahead" in the formula card. */
+  const ahead = f.aheadMinutes
+    ? `<div class="tl-ahead">
+         <span class="t">${clockFrom(state.startTime, -f.aheadMinutes)}</span>
+         <span class="l">${f.leaven.id === 'levain' ? 'Build the levain' : `Mix the ${f.leaven.name.toLowerCase()}`}</span>
+         <span class="d">${dur(f.aheadMinutes)} before you start</span>
+       </div>`
+    : '';
+
   $('timeline').innerHTML =
+    ahead +
     `<div class="tl-bar">${bar}</div>
      <div class="tl-list">${items}</div>
      <div class="tl-finish">
@@ -735,6 +752,9 @@ function renderSchedule(m) {
      </div>`;
 
   $('statTotalTime').textContent = dur(total);
+  $('statTotalTimeNote').textContent = f.aheadMinutes
+    ? `mixing to oven · ${dur(f.aheadMinutes)} ${f.leaven.id === 'levain' ? 'levain' : f.leaven.name.toLowerCase()} before that`
+    : 'mixing to out of oven';
 
   Timer.setStages(r.bake.stages);
 

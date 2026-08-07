@@ -266,6 +266,16 @@ const RECIPES = [
    * 2 g yeast, 8-10 h bulk, four baguettes per batch. Converted to baker's
    * percentages. The very low yeast is the point - it is what the long bulk is
    * paying for.
+   * The description's own timeline is the whole method: 2 min mixing, 8-10 h
+   * rising, 3 min shaping, 25 min baking. That is what the schedule follows.
+   * Judgment calls, since the source gives weights but not geometry:
+   * - Length is never stated. He bakes the four on one home oven tray, so 40 cm
+   * is the longest they can be; the demi is half a batch piece at 32 cm.
+   * - There is no final proof in the source - shaped loaves go straight in. The
+   * 15 min here is the oven coming up to 250 C with the baguettes waiting,
+   * which is what actually happens.
+   * - The video says 900 g flour; the description corrects it to 950 g and notes
+   * the subtitles were fixed. 950 g is the figure this formula uses.
    */
   {
     id: 'baguette',
@@ -301,19 +311,20 @@ const RECIPES = [
       canTouch: false
     },
     sizes: [
-      { id: 'fit', label: 'Fit my pan', fitToPan: true, default: true },
+      { id: 'fit', label: 'Fit my pan', fitToPan: true },
       { id: 'demi', label: 'Demi', g: 210, length: 32 },
-      { id: 'full', label: 'Full batch', g: 425, length: 50 }
+      { id: 'full', label: 'Full batch', g: 425, length: 40, default: true }
     ],
     quickCounts: [2, 3, 4],
-    schedule: { mix: 5, bulk: { direct: 540, preferment: 110 }, shape: 10, proof: 45 },
+    defaultCount: 4,
+    schedule: { mix: 2, bulk: { direct: 540, preferment: 110 }, shape: 3, proof: 15 },
     bake: {
-      temp: '250°C falling to 235°C',
-      time: '12 min steam · 8–10 min dry',
-      stages: [{ label: 'With steam', min: 12 }, { label: 'Dry', min: 9 }],
-      steam: 'Hard steam at load, vent for the last third',
+      temp: '250°C',
+      time: '25 min',
+      stages: [{ label: 'Bake', min: 25 }],
+      steam: 'Optional — use the steam function if the oven has one',
       internal: '96–98°C',
-      minutes: 22
+      minutes: 25
     }
   },
 
