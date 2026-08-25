@@ -5,7 +5,7 @@
 # if the formula or packing tests fail, no image is produced.
 
 # ── 1. Verify ────────────────────────────────────────────────────────────────
-FROM node:25-alpine AS test
+FROM node:26-alpine AS test
 
 WORKDIR /app
 COPY package.json ./
