@@ -192,3 +192,38 @@ test('hydration reported by the model matches the recipe as written', () => {
     assert.ok(h > 40 && h < 100, `${recipe.id}: implausible hydration ${h.toFixed(1)}%`);
   }
 });
+
+/* "Fit my pan" on a round pan used to take the full diameter as the length.
+   A rod has width, so its corners hit the rim first: the pan-sized baguette
+   then failed its own pan, reported as "0 cm too long". */
+test('a rod sized by longestRod fits its round pan', () => {
+  const recipe = byId('baguette');
+  const width = recipe.shape.targetWidth;
+  for (const pan of PANS.filter(p => p.type === 'round')) {
+    const length = Math.floor(Packing.longestRod(pan, width) * 10) / 10;
+    const g = Math.round(recipe.shape.arealDensity * length * width);
+    const footprint = Packing.pieceFootprint(recipe, { g, length }, hydrationOf(recipe));
+    const res = Packing.fit({ pan, footprint, gap: Packing.pieceGap(recipe, false), requested: 1 });
+    assert.equal(res.capacity, 1, `${pan.id}: a ${length} cm rod should fit`);
+    assert.equal(res.tooLong, null, `${pan.id}: should not report an overhang`);
+  }
+});
+
+test('an overhang is always a positive amount, whichever way it fails', () => {
+  const recipe = byId('baguette');
+  const gap = Packing.pieceGap(recipe, false);
+  const cases = [
+    // Too long for a round pan, though shorter than its diameter's worth of width.
+    { pan: PANS.find(p => p.id === 'dutch24'), size: { g: 150, length: 22.5 } },
+    // Short enough for a long narrow custom pan, but wider than it.
+    { pan: { id: 'narrow', type: 'rect', w: 70, h: 6 }, size: { g: 425, length: 40 } },
+    { pan: PANS.find(p => p.id === 'quarter'), size: { g: 425, length: 40 } }
+  ];
+  for (const { pan, size } of cases) {
+    const footprint = Packing.pieceFootprint(recipe, size, hydrationOf(recipe));
+    const res = Packing.fit({ pan, footprint, gap, requested: 1 });
+    assert.equal(res.capacity, 0, `${pan.id}: should not fit`);
+    assert.ok(res.tooLong && res.tooLong.by > 0,
+      `${pan.id}: overhang should be positive, got ${res.tooLong?.by}`);
+  }
+});

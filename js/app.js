@@ -66,8 +66,7 @@ function recipe() {
 function resolveSize(size, pan) {
   if (!size || !size.fitToPan) return size;
   const sh = recipe().shape;
-  const u = Packing.usable(pan || currentPan());
-  const L = Math.floor((u.round ? u.d : Math.max(u.w, u.h)) * 10) / 10;
+  const L = Math.floor(Packing.longestRod(pan || currentPan(), sh.targetWidth) * 10) / 10;
   return {
     ...size,
     length: L,
@@ -100,6 +99,7 @@ const g = n => Formula.weigh(n).toLocaleString('en-US');
 /* "Euro oven tray — 44 × 37 cm" reads badly mid-sentence; keep just the name. */
 const panLabel = p => p.name.split('—')[0].trim().toLowerCase();
 const cm = n => (Math.round(n * 10) / 10).toFixed(1).replace(/\.0$/, '');
+const panSpec = p => p.type === 'round' ? `${cm(p.d)} cm round` : `${cm(p.w)} × ${cm(p.h)} cm`;
 
 function dur(min) {
   const h = Math.floor(min / 60), m = Math.round(min % 60);
@@ -166,10 +166,8 @@ function renderSizes() {
     }).join('');
 
     const fp = footprintFor(sz);
-    const pan = currentPan();
-    const panSpec = pan.type === 'round' ? `${cm(pan.d)} cm round` : `${cm(pan.w)} × ${cm(pan.h)} cm`;
     $('sizeHint').textContent = sz.fitToPan
-      ? `Shaped to ${cm(sz.length)} cm to use the full ${panSpec} pan — ` +
+      ? `Shaped to ${cm(sz.length)} cm to use the full ${panSpec(currentPan())} pan — ` +
         `${sz.g} g each, about ${cm(fp.w)} cm wide baked.`
       : fp.kind === 'rect'
         ? (fp.tin
@@ -256,9 +254,7 @@ function renderPanControls() {
       ? 'Pull-apart rolls with soft, pale sides'
       : `${cm(r.shape.gapWhenSeparate ?? r.shape.gap)} cm apart — crust all the way round`;
   }
-  $('panSpec').textContent = pan.type === 'round'
-    ? `${cm(pan.d)} cm round`
-    : `${cm(pan.w)} × ${cm(pan.h)} cm`;
+  $('panSpec').textContent = panSpec(pan);
 }
 
 /* ── Model ───────────────────────────────────────────────────────────── */
@@ -414,13 +410,14 @@ function drawPan(m) {
         let slash = '';
         if (!footprint.tin && footprint.l > 20) {
           const n = Math.max(3, Math.round(footprint.l / 9));
+          /* Scores run along the loaf, so a loaf laid front to back gets them
+             turned a quarter with it. */
+          const len = rot ? h : w, girth = rot ? w : h;
+          const [ax, ay] = rot ? [girth * .22, girth * .18] : [girth * .18, -girth * .22];
           for (let k = 0; k < n; k++) {
-            const t = (k + .5) / n;
-            const cx0 = x - w / 2 + t * w, cy0 = y;
-            slash += rot
-              ? `<line x1="${x - h / 2 + t * 0}" y1="0" x2="0" y2="0" opacity="0"/>`
-              : `<line x1="${cx0 - h * .18}" y1="${cy0 + h * .22}"
-                       x2="${cx0 + h * .18}" y2="${cy0 - h * .22}"
+            const along = ((k + .5) / n - .5) * len;
+            const cx0 = rot ? x : x + along, cy0 = rot ? y + along : y;
+            slash += `<line x1="${cx0 - ax}" y1="${cy0 - ay}" x2="${cx0 + ax}" y2="${cy0 + ay}"
                        stroke="var(--ember-2)" stroke-width="1.6"
                        stroke-linecap="round" opacity=".65"/>`;
           }
@@ -442,17 +439,18 @@ function drawPan(m) {
     const cx = ox + panW * S / 2, cy = oy + panH * S / 2;
     if (footprint.kind === 'rect') {
       const w = footprint.l * S, h = footprint.w * S;
-      overhang = `
-        <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}"
-              rx="${h / 2}" fill="var(--ember)" opacity=".16"/>
-        <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}"
-              rx="${h / 2}" fill="none" stroke="var(--bad)" stroke-width="2"
-              stroke-dasharray="7 5"/>
+      const measure = fit.tooLong.dim !== 'long' ? '' : `
         <line x1="${cx - w / 2}" y1="${cy + h / 2 + 12}" x2="${ox}" y2="${cy + h / 2 + 12}"
               stroke="var(--bad)" stroke-width="1.6"/>
         <text class="svg-num" x="${(cx - w / 2 + ox) / 2}" y="${cy + h / 2 + 27}"
               fill="var(--bad)" font-size="11" text-anchor="middle"
               >${cm(fit.tooLong.by / 2)} cm over</text>`;
+      overhang = `
+        <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}"
+              rx="${h / 2}" fill="var(--ember)" opacity=".16"/>
+        <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}"
+              rx="${h / 2}" fill="none" stroke="var(--bad)" stroke-width="2"
+              stroke-dasharray="7 5"/>${measure}`;
     } else {
       const rad = footprint.d * S / 2;
       overhang = `
@@ -466,8 +464,8 @@ function drawPan(m) {
   svg.querySelector('title')?.remove();
   const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
   title.textContent = fit.kind === 'slab'
-    ? `${r.name} filling a ${$('panSpec').textContent} pan`
-    : `${fit.shown} of ${fit.requested} ${r.unit.many} laid out on a ${$('panSpec').textContent} pan`;
+    ? `${r.name} filling a ${panSpec(pan)} pan`
+    : `${fit.shown} of ${fit.requested} ${r.unit.many} laid out on a ${panSpec(pan)} pan`;
   svg.prepend(title);
 }
 
@@ -519,9 +517,8 @@ function renderLegend(m, trailing) {
 function renderVerdict(m) {
   const { fit, r, size, isSlab, count, pan } = m;
   const el = $('verdict');
-  const spec = pan.type === 'round' ? `${cm(pan.d)} cm round` : `${cm(pan.w)} × ${cm(pan.h)} cm`;
+  const spec = panSpec(pan);
   const nounFor = n => n === 1 ? r.unit.one : r.unit.many;
-  const noun = nounFor(count);
   /* "fit my pan" is a mode, not a size name — say the length instead. And only
      bare adjectives take "size": "at 30 cm size" and "at large tin size" don't. */
   const sizeWord = !size ? ''
@@ -542,18 +539,19 @@ function renderVerdict(m) {
 
   if (fit.tooLong) {
     el.dataset.state = 'bad';
-    const isRod = m.footprint.kind === 'rect';
-    $('verdictLine').textContent = isRod
-      ? `A ${cm(m.footprint.l)} cm ${noun} is too long for this pan`
-      : `One ${cm(m.footprint.d)} cm ${noun} is wider than this pan`;
+    /* This sentence is about a single piece, whatever the count. */
+    const { by, limit, size: across } = fit.tooLong;
+    const isLong = fit.tooLong.dim === 'long';
+    $('verdictLine').textContent = isLong
+      ? `A ${cm(across)} cm ${r.unit.one} is too long for this pan`
+      : `One ${cm(across)} cm ${r.unit.one} is wider than this pan`;
     const bigger = biggerPanThatFits(m);
+    const fix = isLong ? 'Shape it shorter' : 'Shape it smaller';
     $('verdictSub').textContent =
-      `Usable space is ${cm(fit.tooLong.limit)} cm, so it is ${cm(fit.tooLong.by)} cm too long — ` +
-      `${cm(fit.tooLong.by / 2)} cm over each end. ` +
-      (bigger ? `Shape it shorter, or move to a ${panLabel(bigger)}.` : `Shape it shorter.`);
-    renderLegend(m, isRod
-      ? `${cm(m.footprint.l)} cm long · pan takes ${cm(fit.tooLong.limit)} cm`
-      : `${cm(m.footprint.d)} cm across · pan takes ${cm(fit.tooLong.limit)} cm`);
+      `Usable space is ${cm(limit)} cm, so it is ${cm(by)} cm too ${isLong ? 'long' : 'wide'} — ` +
+      `${cm(by / 2)} cm over each ${isLong ? 'end' : 'side'}. ` +
+      (bigger ? `${fix}, or move to a ${panLabel(bigger)}.` : `${fix}.`);
+    renderLegend(m, `${cm(across)} cm ${isLong ? 'long' : 'across'} · pan takes ${cm(limit)} cm`);
     return;
   }
 
@@ -885,8 +883,14 @@ $('pffRange').addEventListener('input', e => {
 });
 
 $('panSelect').addEventListener('change', e => { state.panId = e.target.value; render(); });
-$('panW').addEventListener('input', e => { state.customW = +e.target.value || 46; render(); });
-$('panH').addEventListener('input', e => { state.customH = +e.target.value || 33; render(); });
+/* Held to the box's own min and max: every keystroke renders, and a half-typed
+   "6" or a stray "-" would otherwise become a pan with negative usable area. */
+const panDim = (input, fallback) => {
+  const v = +input.value;
+  return v > 0 ? Math.min(+input.max, Math.max(+input.min, v)) : fallback;
+};
+$('panW').addEventListener('input', e => { state.customW = panDim(e.target, 46); render(); });
+$('panH').addEventListener('input', e => { state.customH = panDim(e.target, 33); render(); });
 
 $('touchSwitch').addEventListener('change', e => { state.letTouch = e.target.checked; render(); });
 $('startTime').addEventListener('input', e => { state.startTime = e.target.value || '08:00'; render(); });

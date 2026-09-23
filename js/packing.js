@@ -80,6 +80,15 @@ const Packing = (() => {
     return { round: false, w, h, area: w * h };
   }
 
+  /* Longest rod of a given baked width that lies flat on the pan. On a round
+     pan it is a chord: the corners reach the rim before the ends do, so the
+     full diameter is never available. */
+  function longestRod(pan, width) {
+    const u = usable(pan);
+    if (!u.round) return Math.max(u.w, u.h);
+    return width < u.d ? Math.sqrt(u.d ** 2 - width ** 2) : 0;
+  }
+
   /* ── Circle packing ───────────────────────────────────────────────── */
 
   function circlesGrid(W, H, d, gap) {
@@ -188,8 +197,8 @@ const Packing = (() => {
         const s = circlesStaggered(u.w, u.h, d, gap);
         best = s.count > g.count ? s : g;
         if (best.count === 0) {
-          const limit = Math.max(u.w, u.h);
-          tooLong = { by: d - Math.min(u.w, u.h), dim: 'across', size: d, limit: Math.min(u.w, u.h) };
+          const limit = Math.min(u.w, u.h);
+          tooLong = { by: d - limit, dim: 'across', size: d, limit };
         }
       }
     } else {
@@ -200,14 +209,21 @@ const Packing = (() => {
         best = fitsOne
           ? { count: 1, pos: [{ x: u.d / 2, y: u.d / 2, rot: 0 }], layout: 'single' }
           : { count: 0, pos: [], layout: 'grid' };
-        if (!fitsOne) tooLong = { by: l - u.d, dim: 'long', size: l, limit: u.d };
+        if (!fitsOne) {
+          const limit = longestRod(pan, w);
+          tooLong = { by: l - limit, dim: 'long', size: l, limit };
+        }
       } else {
         const a = rectsGrid(u.w, u.h, l, w, gap, 0);   // length across the pan
         const b = rectsGrid(u.w, u.h, w, l, gap, 90);  // length front to back
         best = b.count > a.count ? b : a;
         if (best.count === 0) {
-          const limit = Math.max(u.w, u.h);
-          tooLong = { by: l - limit, dim: 'long', size: l, limit };
+          /* Say which way it fails. A rod that is short enough can still be too
+             wide for a narrow custom pan, and "-20 cm too long" helps nobody. */
+          const long = Math.max(u.w, u.h), short = Math.min(u.w, u.h);
+          tooLong = l > long
+            ? { by: l - long, dim: 'long', size: l, limit: long }
+            : { by: w - short, dim: 'across', size: w, limit: short };
         }
       }
     }
@@ -240,5 +256,5 @@ const Packing = (() => {
     return usable(pan).area * gPerCm2;
   }
 
-  return { pieceFootprint, pieceGap, fit, usable, slabWeight };
+  return { pieceFootprint, pieceGap, fit, usable, longestRod, slabWeight };
 })();
