@@ -122,6 +122,16 @@ function clockFrom(start, addMin) {
   return day > 0 ? `${s}⁺${day}` : day < 0 ? `${s}⁻${-day}` : s;
 }
 
+/* The container serves a CSP of `style-src 'self'`, which drops every inline
+   style attribute in injected markup. Numbers that have to reach CSS therefore
+   ride in data- attributes and go on through the CSSOM, which the policy
+   allows. tools/check-assets.mjs keeps it that way. */
+function applyDataStyles(root) {
+  root.querySelectorAll('[data-w]').forEach(n => n.style.setProperty('--w', n.dataset.w));
+  root.querySelectorAll('[data-width]').forEach(n => { n.style.width = n.dataset.width; });
+  root.querySelectorAll('[data-delay]').forEach(n => { n.style.animationDelay = n.dataset.delay; });
+}
+
 /* ── Control rendering ───────────────────────────────────────────────── */
 
 /* Built once. Rebuilding it on every render would reset scrollLeft, so moving a
@@ -387,7 +397,7 @@ function drawPan(m) {
                          fill="none" stroke="var(--ember-2)" stroke-width="1.8"
                          stroke-linecap="round" opacity=".7"/>`;
         }
-        pieces += `<g class="piece" style="animation-delay:${delay}">
+        pieces += `<g class="piece" data-delay="${delay}">
           <circle cx="${x}" cy="${y}" r="${rad}" fill="url(#dough)"/>
           ${footprint.stretched ? '' : `<circle cx="${x}" cy="${y}" r="${footprint.shapedD * S / 2}"
                   fill="none" stroke="var(--ember-2)" stroke-width="1.4"
@@ -397,7 +407,7 @@ function drawPan(m) {
       } else if (footprint.kind === 'ring') {
         const rad = footprint.d * S / 2;
         const hole = rad * (footprint.holeRatio ?? .3);
-        pieces += `<g class="piece" style="animation-delay:${delay}">
+        pieces += `<g class="piece" data-delay="${delay}">
           <path d="M ${x - rad} ${y} a ${rad} ${rad} 0 1 0 ${rad * 2} 0 a ${rad} ${rad} 0 1 0 ${-rad * 2} 0
                    M ${x - hole} ${y} a ${hole} ${hole} 0 1 1 ${hole * 2} 0 a ${hole} ${hole} 0 1 1 ${-hole * 2} 0"
                 fill="url(#dough)" fill-rule="evenodd"/></g>`;
@@ -422,7 +432,7 @@ function drawPan(m) {
                        stroke-linecap="round" opacity=".65"/>`;
           }
         }
-        pieces += `<g class="piece" style="animation-delay:${delay}">
+        pieces += `<g class="piece" data-delay="${delay}">
           <rect x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="${rx}"
                 fill="${footprint.tin ? 'var(--panel-3)' : 'url(#dough)'}"
                 stroke="${footprint.tin ? 'var(--pan-rim)' : 'none'}" stroke-width="2"/>
@@ -461,6 +471,7 @@ function drawPan(m) {
   }
 
   svg.innerHTML = defs + panEl + pieces + overhang;
+  applyDataStyles(svg);
   svg.querySelector('title')?.remove();
   const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
   title.textContent = fit.kind === 'slab'
@@ -607,7 +618,7 @@ function tableRows(rows, maxPct) {
       <td class="p">${Formula.round(r.pctOfFlour, r.pctOfFlour < 1 ? 2 : 1)}%</td>
       <td class="bar"><div class="bar-track">
         <div class="bar-fill" data-kind="${r.kind}"
-             style="width:${Math.min(100, (r.pctOfFlour / maxPct) * 100)}%"></div>
+             data-width="${Math.min(100, (r.pctOfFlour / maxPct) * 100)}%"></div>
       </div></td>
     </tr>`).join('');
 }
@@ -661,6 +672,7 @@ function renderFormula(m) {
     </div>`;
 
   $('formulaTables').innerHTML = html;
+  applyDataStyles($('formulaTables'));
   $('statDough').textContent = `${g(f.totalDough)} g`;
   $('statFlour').textContent = `${g(f.totalFlour)} g`;
 
@@ -709,7 +721,7 @@ function renderSchedule(m) {
   /* Bar and captions share the flex ratio, so they track each other wherever
      the captions have room. Only segments with room to spare carry a label. */
   const bar = f.steps.map(s =>
-    `<div class="tl-seg" data-kind="${s.kind}" style="--w:${s.minutes}">
+    `<div class="tl-seg" data-kind="${s.kind}" data-w="${s.minutes}">
        ${s.minutes / total > 0.17 ? s.label : ''}
      </div>`).join('');
 
@@ -720,7 +732,7 @@ function renderSchedule(m) {
   const items = f.steps.map(s => {
     const at = clockFrom(state.startTime, acc);
     acc += s.minutes;
-    return `<div class="tl-item" data-kind="${s.kind}" style="--w:${s.minutes}"
+    return `<div class="tl-item" data-kind="${s.kind}" data-w="${s.minutes}"
                  title="${s.label} — ${dur(s.minutes)}, from ${at}">
       <span class="t">${at}</span>
       <span class="l">${s.label}</span>
@@ -748,6 +760,7 @@ function renderSchedule(m) {
        <span class="l">Out of the oven</span>
        <span class="d">${dur(total)} in total</span>
      </div>`;
+  applyDataStyles($('timeline'));
 
   $('statTotalTime').textContent = dur(total);
   $('statTotalTimeNote').textContent = f.aheadMinutes

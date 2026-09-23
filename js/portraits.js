@@ -123,7 +123,7 @@ const Portraits = (() => {
   const skin = (clipId, { flour = 0, mottle = 0.5 } = {}) => `
     <g clip-path="url(#${clipId})">
       <rect x="0" y="0" width="${VB.w}" height="${VB.h}"
-            filter="url(#pt-mottle)" opacity="${mottle}" style="mix-blend-mode:multiply"/>
+            filter="url(#pt-mottle)" opacity="${mottle}" class="pt-mottle"/>
       ${flour ? `<rect x="0" y="0" width="${VB.w}" height="${VB.h}"
             filter="url(#pt-flour)" opacity="${flour}"/>` : ''}
     </g>`;

@@ -276,6 +276,9 @@ h1 {
   border-right: 1px solid var(--line-soft);
 }
 .portrait-svg { width: 100%; height: auto; display: block; }
+/* Crust mottle is multiplied over the body. A class, not an inline style,
+   because the served CSP (style-src 'self') drops those. */
+.portrait-svg .pt-mottle { mix-blend-mode: multiply; }
 
 .hero-copy { padding: var(--pad) var(--pad) var(--pad) 0; min-width: 0; }
 
