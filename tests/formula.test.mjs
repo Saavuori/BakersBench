@@ -68,6 +68,25 @@ for (const recipe of RECIPES) {
       );
     });
 
+    /* The baker weighs the rows, not the totals. Each total line has to be
+       what its rows add up to, or the scale disagrees with the page. */
+    test(`${label}: every total is the sum of the rows above it`, () => {
+      const out = Formula.compute({
+        recipe, leavenId: leaven.id, pff: pffFor(recipe, leaven), totalDough: TARGET
+      });
+      const sum = rows => rows.reduce((s, r) => s + r.g, 0);
+      if (out.preferment) {
+        const pre = sum(out.preferment.rows);
+        assert.ok(Math.abs(pre - out.preferment.total) < 0.01,
+          `${out.preferment.name} rows weigh ${pre.toFixed(2)} g, total says ` +
+          `${out.preferment.total.toFixed(2)} g`);
+      }
+      const weighed = sum(out.finalRows.filter(r => r.kind !== 'preferment')) +
+        sum(out.preferment?.rows ?? []);
+      assert.ok(Math.abs(weighed - TARGET) < 0.5,
+        `weighing every ingredient gives ${weighed.toFixed(2)} g, not ${TARGET} g`);
+    });
+
     test(`${label}: never asks for a negative weight`, () => {
       const out = Formula.compute({
         recipe, leavenId: leaven.id, pff: pffFor(recipe, leaven), totalDough: TARGET

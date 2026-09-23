@@ -50,10 +50,7 @@ export const {
 } = vm.runInContext(bundle, context, { filename: 'bakers-bench.bundle.js' });
 
 /** Hydration a recipe carries as written, counting water from every source. */
-export function hydrationOf(recipe) {
-  const water = list => list.reduce((sum, i) => sum + i.pct * (i.water ?? 0), 0);
-  return water(recipe.liquids) + water(recipe.others);
-}
+export const hydrationOf = recipe => Formula.hydrationOf(recipe);
 
 /** The footprint the app would compute for one piece of a given size. */
 export function footprintOf(recipe, size) {
