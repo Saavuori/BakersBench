@@ -146,7 +146,7 @@ function toRecipe({ file, data }) {
   };
 }
 
-const entries = breads.map(toRecipe).sort((a, b) => a.order - b.order || 0);
+const entries = breads.map(toRecipe).sort((a, b) => a.order - b.order);
 
 const seen = new Set();
 for (const e of entries) {

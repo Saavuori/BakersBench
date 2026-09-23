@@ -253,7 +253,6 @@ const Timer = (() => {
     const next = Math.max(0, S.remaining + deltaSeconds);
     S.remaining = next;
     S.total = Math.max(S.total, next);
-    if (!S.total) S.total = next;
     if (S.running) S.endsAt = Date.now() + next * 1000;
     if (!S.label) S.label = 'Timer';
     paint();
@@ -333,5 +332,5 @@ const Timer = (() => {
     paint();
   }
 
-  return { init, setStages, set, enterFull, exitFull, isRunning: () => S.running };
+  return { init, setStages, set, enterFull, exitFull };
 })();

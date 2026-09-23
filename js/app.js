@@ -31,10 +31,8 @@ const leaven = () => Formula.leavenById(state.leavenId);
 const STRUCTURAL = l => (l.water ?? 0) >= 0.85;
 
 function waterSplit(r) {
-  const sum = (arr, f = () => true) =>
-    arr.filter(f).reduce((s, i) => s + i.pct * (i.water ?? 0), 0);
-  const fixed = sum(r.others) + sum(r.liquids, l => !STRUCTURAL(l));
-  return { fixed, flexible: sum(r.liquids, STRUCTURAL), total: fixed + sum(r.liquids, STRUCTURAL) };
+  const flexible = Formula.hydrationOf({ liquids: r.liquids.filter(STRUCTURAL), others: [] });
+  return { fixed: Formula.hydrationOf(r) - flexible, flexible };
 }
 
 /* Hydration a recipe can actually reach: it can never go below what its
@@ -226,7 +224,7 @@ function renderLeavens() {
 
 function renderHydration() {
   const base = baseRecipe();
-  const stock = hydrationOf(base);
+  const stock = Formula.hydrationOf(base);
   const cur = state.hydration == null ? stock : state.hydration;
   const { min, max } = hydrationRange(base);
   const el = $('hydraRange');
@@ -269,13 +267,9 @@ function renderPanControls() {
 
 /* ── Model ───────────────────────────────────────────────────────────── */
 
-function hydrationOf(r) {
-  const w = src => src.reduce((s, i) => s + i.pct * (i.water ?? 0), 0);
-  return w(r.liquids) + w(r.others);
-}
-
 function footprintFor(size) {
-  return Packing.pieceFootprint(recipe(), size, hydrationOf(recipe()));
+  const r = recipe();
+  return Packing.pieceFootprint(r, size, Formula.hydrationOf(r));
 }
 
 function model() {
@@ -491,8 +485,7 @@ function smallerSizeThatFits(m) {
     .filter(s => s.g < m.size.g)
     .sort((a, b) => b.g - a.g);
   for (const s of cands) {
-    const fp = Packing.pieceFootprint(r, s, hydrationOf(r));
-    const res = Packing.fit({ pan: m.pan, footprint: fp, gap: m.gap, requested: m.count });
+    const res = Packing.fit({ pan: m.pan, footprint: footprintFor(s), gap: m.gap, requested: m.count });
     if (res.fits) return { size: s, capacity: res.capacity };
   }
   return null;
@@ -801,7 +794,6 @@ function renderHero() {
 }
 
 function render() {
-  const r = recipe();
   renderHero();
   renderRail();
   renderHydration();

@@ -8,7 +8,7 @@ The second most valuable is **a correction to a number that is wrong**.
 ```bash
 git clone https://github.com/Saavuori/BakersBench.git
 cd BakersBench
-npm test          # 271 checks, no install step, ~0.6s
+npm test          # 326 checks, no install step, ~0.6s
 python serve.py 5178
 ```
 

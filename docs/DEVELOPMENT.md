@@ -40,7 +40,7 @@ node tools/check-assets.mjs
 node tools/check-links.mjs --network
 ```
 
-271 checks, no dependencies, about six tenths of a second.
+326 checks, no dependencies, about six tenths of a second.
 
 ### How the harness works
 

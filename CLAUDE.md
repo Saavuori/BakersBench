@@ -57,7 +57,7 @@ YAML subset the parser accepts.
 ```bash
 # edit recipes/<bread>.yaml
 npm run build     # regenerate js/recipes.js
-npm test          # 271 checks
+npm test          # 326 checks
 ```
 
 ### Adding a bread
@@ -94,7 +94,7 @@ Delete the `.yaml`, delete its portrait from `js/portraits.js`, `npm run build`.
 ```bash
 npm run build        # recipes/*.yaml -> js/recipes.js
 npm run build:check  # fail if the generated file is stale
-npm test             # 271 checks, no install step, ~0.6s
+npm test             # 326 checks, no install step, ~0.6s
 npm run check        # build check + tests + asset check + citation check
 npm start            # serve on http://localhost:5178
 
@@ -175,7 +175,7 @@ touch the DOM.
 
 ## Testing
 
-`npm test` runs 271 checks in about 0.6 s with no install step.
+`npm test` runs 326 checks in about 0.6 s with no install step.
 
 | File | Protects |
 |---|---|
