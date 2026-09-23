@@ -80,6 +80,27 @@ test('block scalars', () => {
   assert.deepEqual(parse(['a: >', '  one', '  two', 'b: 1'].join('\n')), { a: 'one two', b: 1 });
 });
 
+/* Block scalars hold prose — the notes, blurbs and hints. They used to go
+   through comment stripping like any other line, so "#2" and everything after
+   it vanished without a word, a quote spanning two lines threw, and the blank
+   lines between paragraphs were dropped. */
+test('block scalars keep their prose verbatim', () => {
+  assert.deepEqual(parse(['a: |', '  tin #2 # not a comment', 'b: 1'].join('\n')),
+    { a: 'tin #2 # not a comment', b: 1 });
+  assert.deepEqual(parse(['a: >', '  "a quote', '  over two lines"'].join('\n')),
+    { a: '"a quote over two lines"' });
+  assert.deepEqual(parse(['a: |', '  one', '', '  two', '    deeper', ''].join('\n')),
+    { a: 'one\n\ntwo\n  deeper' });
+  assert.deepEqual(parse(['a: >', '  one', '  two', '', '  three'].join('\n')),
+    { a: 'one two\nthree' });
+});
+
+test('block scalars inside sequence items end at the next key', () => {
+  assert.deepEqual(
+    parse(['items:', '  - hint: >', '      one', '      two', '    pct: 2'].join('\n')),
+    { items: [{ hint: 'one two', pct: 2 }] });
+});
+
 /* ── Rejections: the part that matters ──────────────────────────────────── */
 
 const REJECTS = [
