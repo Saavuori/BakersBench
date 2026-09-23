@@ -266,16 +266,19 @@ const RECIPES = [
    * 2 g yeast, 8-10 h bulk, four baguettes per batch. Converted to baker's
    * percentages. The very low yeast is the point - it is what the long bulk is
    * paying for.
+   *
    * The description's own timeline is the whole method: 2 min mixing, 8-10 h
    * rising, 3 min shaping, 25 min baking. That is what the schedule follows.
+   *
    * Judgment calls, since the source gives weights but not geometry:
+   *
    * - Length is never stated. He bakes the four on one home oven tray, so 40 cm
-   * is the longest they can be; the demi is half a batch piece at 32 cm.
+   *   is the longest they can be; the demi is half a batch piece at 32 cm.
    * - There is no final proof in the source - shaped loaves go straight in. The
-   * 15 min here is the oven coming up to 250 C with the baguettes waiting,
-   * which is what actually happens.
+   *   15 min here is the oven coming up to 250 C with the baguettes waiting,
+   *   which is what actually happens.
    * - The video says 900 g flour; the description corrects it to 950 g and notes
-   * the subtitles were fixed. 950 g is the figure this formula uses.
+   *   the subtitles were fixed. 950 g is the figure this formula uses.
    */
   {
     id: 'baguette',

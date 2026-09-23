@@ -19,6 +19,13 @@ const Formula = (() => {
   /* Weigh to sensible precision: big amounts to the gram, tiny ones to 0.1 g. */
   const weigh = g => (g >= 20 ? round(g, 0) : g >= 1 ? round(g, 1) : round(g, 2));
 
+  /* Total hydration as the recipe writes it: water from every ingredient that
+     carries some — milk, egg and butter included — against total flour. */
+  function hydrationOf(recipe) {
+    const water = src => src.reduce((s, i) => s + i.pct * (i.water ?? 0), 0);
+    return water(recipe.liquids) + water(recipe.others);
+  }
+
   function leavenById(id) {
     return LEAVENS.find(l => l.id === id) || LEAVENS.find(l => l.id === 'instant');
   }
@@ -70,8 +77,7 @@ const Formula = (() => {
     const F = totalDough / (sumPct / 100);
 
     /* ── 3. Water accounting ─────────────────────────────────────────── */
-    const waterFrom = src => src.reduce((s, i) => s + i.pct * (i.water ?? 0), 0);
-    const totalWaterPct = waterFrom(recipe.liquids) + waterFrom(recipe.others);
+    const totalWaterPct = hydrationOf(recipe);
     const addedWaterPct = recipe.liquids
       .filter(l => (l.water ?? 0) === 1)
       .reduce((s, l) => s + l.pct, 0);
@@ -130,6 +136,10 @@ const Formula = (() => {
       const seedG = leaven.seedRatio ? (preFlour + preWater) * leaven.seedRatio : 0;
       const seedFlour = seedG / 2;   // ripe starter kept at 100% hydration
       const seedWater = seedG / 2;
+      /* The pinch of yeast goes into the preferment, so it is part of what gets
+         carried into the final dough — leaving it out of the total would make
+         the rows above it add up to more than the line that sums them. */
+      const preYeastG = leaven.prefermentYeastPct ? F * yeastPct / 100 : 0;
 
       preferment = {
         id: leaven.id,
@@ -138,7 +148,7 @@ const Formula = (() => {
         hydration: leaven.hydration,
         buildMinutes: leaven.buildMinutes,
         rows: [],
-        total: preFlour + preWater,
+        total: preFlour + preWater + preYeastG,
         prefermentedFlourPct: pff * 100
       };
 
@@ -156,9 +166,9 @@ const Formula = (() => {
           name: 'Ripe starter', g: seedG, pctOfFlour: seedG / F * 100, kind: 'seed'
         });
       }
-      if (leaven.prefermentYeastPct) {
+      if (preYeastG > 0) {
         preferment.rows.push({
-          name: 'Instant yeast', g: F * yeastPct / 100,
+          name: 'Instant yeast', g: preYeastG,
           pctOfFlour: yeastPct, kind: 'yeast'
         });
       }
@@ -238,5 +248,5 @@ const Formula = (() => {
     return { label: 'Extreme', note: 'Nearly a batter. Bake it in a pan or it will pancake.' };
   }
 
-  return { compute, hydrationBand, weigh, round, leavenById };
+  return { compute, hydrationOf, hydrationBand, weigh, round, leavenById };
 })();

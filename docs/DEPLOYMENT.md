@@ -22,7 +22,7 @@ docker run --rm -p 8080:8080 bakers-bench
 
 Two stages:
 
-1. **`test`** — `node:22-alpine`, runs the full test suite and the citation
+1. **`test`** — `node:26-alpine`, runs the full test suite and the citation
    check. A marker file it writes is copied into the runtime stage, which makes
    the tests a hard build dependency rather than a stage BuildKit can prune. A
    failing formula therefore cannot become an image.

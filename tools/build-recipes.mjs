@@ -146,7 +146,7 @@ function toRecipe({ file, data }) {
   };
 }
 
-const entries = breads.map(toRecipe).sort((a, b) => a.order - b.order || 0);
+const entries = breads.map(toRecipe).sort((a, b) => a.order - b.order);
 
 const seen = new Set();
 for (const e of entries) {
@@ -194,12 +194,22 @@ if (problems.length) {
 
 /* ── Emit ─────────────────────────────────────────────────────────────── */
 
+/* Line terminators to JavaScript, though not to JSON or YAML. */
+const LINE_SEP = String.fromCharCode(0x2028);
+const PARA_SEP = String.fromCharCode(0x2029);
+
 /** Deterministic JS literal. Objects stay on one line until they get long. */
 function js(value, indent = 0) {
   const pad = ' '.repeat(indent);
   if (value === null) return 'null';
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  if (typeof value === 'string') return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+  if (typeof value === 'string') {
+    // A literal block scalar can carry newlines, which a '…' literal cannot.
+    const escaped = value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+      .replace(/\r/g, '\\r').replace(/\n/g, '\\n')
+      .replaceAll(LINE_SEP, '\\u2028').replaceAll(PARA_SEP, '\\u2029');
+    return `'${escaped}'`;
+  }
 
   if (Array.isArray(value)) {
     if (!value.length) return '[]';
@@ -240,7 +250,8 @@ entries.forEach((e, i) => {
   if (e.notes) {
     lines.push('  /*');
     for (const line of String(e.notes).trimEnd().split('\n')) {
-      lines.push(`   * ${line}`.trimEnd());
+      // A "*/" in the notes would close this comment early and break the file.
+      lines.push(`   * ${line.replaceAll('*/', '*\\/')}`.trimEnd());
     }
     lines.push('   */');
   }

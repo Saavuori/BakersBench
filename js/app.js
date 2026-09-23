@@ -31,10 +31,8 @@ const leaven = () => Formula.leavenById(state.leavenId);
 const STRUCTURAL = l => (l.water ?? 0) >= 0.85;
 
 function waterSplit(r) {
-  const sum = (arr, f = () => true) =>
-    arr.filter(f).reduce((s, i) => s + i.pct * (i.water ?? 0), 0);
-  const fixed = sum(r.others) + sum(r.liquids, l => !STRUCTURAL(l));
-  return { fixed, flexible: sum(r.liquids, STRUCTURAL), total: fixed + sum(r.liquids, STRUCTURAL) };
+  const flexible = Formula.hydrationOf({ liquids: r.liquids.filter(STRUCTURAL), others: [] });
+  return { fixed: Formula.hydrationOf(r) - flexible, flexible };
 }
 
 /* Hydration a recipe can actually reach: it can never go below what its
@@ -66,8 +64,7 @@ function recipe() {
 function resolveSize(size, pan) {
   if (!size || !size.fitToPan) return size;
   const sh = recipe().shape;
-  const u = Packing.usable(pan || currentPan());
-  const L = Math.floor((u.round ? u.d : Math.max(u.w, u.h)) * 10) / 10;
+  const L = Math.floor(Packing.longestRod(pan || currentPan(), sh.targetWidth) * 10) / 10;
   return {
     ...size,
     length: L,
@@ -100,6 +97,7 @@ const g = n => Formula.weigh(n).toLocaleString('en-US');
 /* "Euro oven tray — 44 × 37 cm" reads badly mid-sentence; keep just the name. */
 const panLabel = p => p.name.split('—')[0].trim().toLowerCase();
 const cm = n => (Math.round(n * 10) / 10).toFixed(1).replace(/\.0$/, '');
+const panSpec = p => p.type === 'round' ? `${cm(p.d)} cm round` : `${cm(p.w)} × ${cm(p.h)} cm`;
 
 function dur(min) {
   const h = Math.floor(min / 60), m = Math.round(min % 60);
@@ -120,6 +118,16 @@ function clockFrom(start, addMin) {
   const s = `${String(Math.floor(inDay / 60)).padStart(2, '0')}:` +
             `${String(inDay % 60).padStart(2, '0')}`;
   return day > 0 ? `${s}⁺${day}` : day < 0 ? `${s}⁻${-day}` : s;
+}
+
+/* The container serves a CSP of `style-src 'self'`, which drops every inline
+   style attribute in injected markup. Numbers that have to reach CSS therefore
+   ride in data- attributes and go on through the CSSOM, which the policy
+   allows. tools/check-assets.mjs keeps it that way. */
+function applyDataStyles(root) {
+  root.querySelectorAll('[data-w]').forEach(n => n.style.setProperty('--w', n.dataset.w));
+  root.querySelectorAll('[data-width]').forEach(n => { n.style.width = n.dataset.width; });
+  root.querySelectorAll('[data-delay]').forEach(n => { n.style.animationDelay = n.dataset.delay; });
 }
 
 /* ── Control rendering ───────────────────────────────────────────────── */
@@ -166,10 +174,8 @@ function renderSizes() {
     }).join('');
 
     const fp = footprintFor(sz);
-    const pan = currentPan();
-    const panSpec = pan.type === 'round' ? `${cm(pan.d)} cm round` : `${cm(pan.w)} × ${cm(pan.h)} cm`;
     $('sizeHint').textContent = sz.fitToPan
-      ? `Shaped to ${cm(sz.length)} cm to use the full ${panSpec} pan — ` +
+      ? `Shaped to ${cm(sz.length)} cm to use the full ${panSpec(currentPan())} pan — ` +
         `${sz.g} g each, about ${cm(fp.w)} cm wide baked.`
       : fp.kind === 'rect'
         ? (fp.tin
@@ -218,7 +224,7 @@ function renderLeavens() {
 
 function renderHydration() {
   const base = baseRecipe();
-  const stock = hydrationOf(base);
+  const stock = Formula.hydrationOf(base);
   const cur = state.hydration == null ? stock : state.hydration;
   const { min, max } = hydrationRange(base);
   const el = $('hydraRange');
@@ -256,20 +262,14 @@ function renderPanControls() {
       ? 'Pull-apart rolls with soft, pale sides'
       : `${cm(r.shape.gapWhenSeparate ?? r.shape.gap)} cm apart — crust all the way round`;
   }
-  $('panSpec').textContent = pan.type === 'round'
-    ? `${cm(pan.d)} cm round`
-    : `${cm(pan.w)} × ${cm(pan.h)} cm`;
+  $('panSpec').textContent = panSpec(pan);
 }
 
 /* ── Model ───────────────────────────────────────────────────────────── */
 
-function hydrationOf(r) {
-  const w = src => src.reduce((s, i) => s + i.pct * (i.water ?? 0), 0);
-  return w(r.liquids) + w(r.others);
-}
-
 function footprintFor(size) {
-  return Packing.pieceFootprint(recipe(), size, hydrationOf(recipe()));
+  const r = recipe();
+  return Packing.pieceFootprint(r, size, Formula.hydrationOf(r));
 }
 
 function model() {
@@ -391,7 +391,7 @@ function drawPan(m) {
                          fill="none" stroke="var(--ember-2)" stroke-width="1.8"
                          stroke-linecap="round" opacity=".7"/>`;
         }
-        pieces += `<g class="piece" style="animation-delay:${delay}">
+        pieces += `<g class="piece" data-delay="${delay}">
           <circle cx="${x}" cy="${y}" r="${rad}" fill="url(#dough)"/>
           ${footprint.stretched ? '' : `<circle cx="${x}" cy="${y}" r="${footprint.shapedD * S / 2}"
                   fill="none" stroke="var(--ember-2)" stroke-width="1.4"
@@ -401,7 +401,7 @@ function drawPan(m) {
       } else if (footprint.kind === 'ring') {
         const rad = footprint.d * S / 2;
         const hole = rad * (footprint.holeRatio ?? .3);
-        pieces += `<g class="piece" style="animation-delay:${delay}">
+        pieces += `<g class="piece" data-delay="${delay}">
           <path d="M ${x - rad} ${y} a ${rad} ${rad} 0 1 0 ${rad * 2} 0 a ${rad} ${rad} 0 1 0 ${-rad * 2} 0
                    M ${x - hole} ${y} a ${hole} ${hole} 0 1 1 ${hole * 2} 0 a ${hole} ${hole} 0 1 1 ${-hole * 2} 0"
                 fill="url(#dough)" fill-rule="evenodd"/></g>`;
@@ -414,18 +414,19 @@ function drawPan(m) {
         let slash = '';
         if (!footprint.tin && footprint.l > 20) {
           const n = Math.max(3, Math.round(footprint.l / 9));
+          /* Scores run along the loaf, so a loaf laid front to back gets them
+             turned a quarter with it. */
+          const len = rot ? h : w, girth = rot ? w : h;
+          const [ax, ay] = rot ? [girth * .22, girth * .18] : [girth * .18, -girth * .22];
           for (let k = 0; k < n; k++) {
-            const t = (k + .5) / n;
-            const cx0 = x - w / 2 + t * w, cy0 = y;
-            slash += rot
-              ? `<line x1="${x - h / 2 + t * 0}" y1="0" x2="0" y2="0" opacity="0"/>`
-              : `<line x1="${cx0 - h * .18}" y1="${cy0 + h * .22}"
-                       x2="${cx0 + h * .18}" y2="${cy0 - h * .22}"
+            const along = ((k + .5) / n - .5) * len;
+            const cx0 = rot ? x : x + along, cy0 = rot ? y + along : y;
+            slash += `<line x1="${cx0 - ax}" y1="${cy0 - ay}" x2="${cx0 + ax}" y2="${cy0 + ay}"
                        stroke="var(--ember-2)" stroke-width="1.6"
                        stroke-linecap="round" opacity=".65"/>`;
           }
         }
-        pieces += `<g class="piece" style="animation-delay:${delay}">
+        pieces += `<g class="piece" data-delay="${delay}">
           <rect x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="${rx}"
                 fill="${footprint.tin ? 'var(--panel-3)' : 'url(#dough)'}"
                 stroke="${footprint.tin ? 'var(--pan-rim)' : 'none'}" stroke-width="2"/>
@@ -442,17 +443,18 @@ function drawPan(m) {
     const cx = ox + panW * S / 2, cy = oy + panH * S / 2;
     if (footprint.kind === 'rect') {
       const w = footprint.l * S, h = footprint.w * S;
-      overhang = `
-        <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}"
-              rx="${h / 2}" fill="var(--ember)" opacity=".16"/>
-        <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}"
-              rx="${h / 2}" fill="none" stroke="var(--bad)" stroke-width="2"
-              stroke-dasharray="7 5"/>
+      const measure = fit.tooLong.dim !== 'long' ? '' : `
         <line x1="${cx - w / 2}" y1="${cy + h / 2 + 12}" x2="${ox}" y2="${cy + h / 2 + 12}"
               stroke="var(--bad)" stroke-width="1.6"/>
         <text class="svg-num" x="${(cx - w / 2 + ox) / 2}" y="${cy + h / 2 + 27}"
               fill="var(--bad)" font-size="11" text-anchor="middle"
               >${cm(fit.tooLong.by / 2)} cm over</text>`;
+      overhang = `
+        <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}"
+              rx="${h / 2}" fill="var(--ember)" opacity=".16"/>
+        <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}"
+              rx="${h / 2}" fill="none" stroke="var(--bad)" stroke-width="2"
+              stroke-dasharray="7 5"/>${measure}`;
     } else {
       const rad = footprint.d * S / 2;
       overhang = `
@@ -463,11 +465,12 @@ function drawPan(m) {
   }
 
   svg.innerHTML = defs + panEl + pieces + overhang;
+  applyDataStyles(svg);
   svg.querySelector('title')?.remove();
   const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
   title.textContent = fit.kind === 'slab'
-    ? `${r.name} filling a ${$('panSpec').textContent} pan`
-    : `${fit.shown} of ${fit.requested} ${r.unit.many} laid out on a ${$('panSpec').textContent} pan`;
+    ? `${r.name} filling a ${panSpec(pan)} pan`
+    : `${fit.shown} of ${fit.requested} ${r.unit.many} laid out on a ${panSpec(pan)} pan`;
   svg.prepend(title);
 }
 
@@ -482,8 +485,7 @@ function smallerSizeThatFits(m) {
     .filter(s => s.g < m.size.g)
     .sort((a, b) => b.g - a.g);
   for (const s of cands) {
-    const fp = Packing.pieceFootprint(r, s, hydrationOf(r));
-    const res = Packing.fit({ pan: m.pan, footprint: fp, gap: m.gap, requested: m.count });
+    const res = Packing.fit({ pan: m.pan, footprint: footprintFor(s), gap: m.gap, requested: m.count });
     if (res.fits) return { size: s, capacity: res.capacity };
   }
   return null;
@@ -519,9 +521,8 @@ function renderLegend(m, trailing) {
 function renderVerdict(m) {
   const { fit, r, size, isSlab, count, pan } = m;
   const el = $('verdict');
-  const spec = pan.type === 'round' ? `${cm(pan.d)} cm round` : `${cm(pan.w)} × ${cm(pan.h)} cm`;
+  const spec = panSpec(pan);
   const nounFor = n => n === 1 ? r.unit.one : r.unit.many;
-  const noun = nounFor(count);
   /* "fit my pan" is a mode, not a size name — say the length instead. And only
      bare adjectives take "size": "at 30 cm size" and "at large tin size" don't. */
   const sizeWord = !size ? ''
@@ -542,18 +543,19 @@ function renderVerdict(m) {
 
   if (fit.tooLong) {
     el.dataset.state = 'bad';
-    const isRod = m.footprint.kind === 'rect';
-    $('verdictLine').textContent = isRod
-      ? `A ${cm(m.footprint.l)} cm ${noun} is too long for this pan`
-      : `One ${cm(m.footprint.d)} cm ${noun} is wider than this pan`;
+    /* This sentence is about a single piece, whatever the count. */
+    const { by, limit, size: across } = fit.tooLong;
+    const isLong = fit.tooLong.dim === 'long';
+    $('verdictLine').textContent = isLong
+      ? `A ${cm(across)} cm ${r.unit.one} is too long for this pan`
+      : `One ${cm(across)} cm ${r.unit.one} is wider than this pan`;
     const bigger = biggerPanThatFits(m);
+    const fix = isLong ? 'Shape it shorter' : 'Shape it smaller';
     $('verdictSub').textContent =
-      `Usable space is ${cm(fit.tooLong.limit)} cm, so it is ${cm(fit.tooLong.by)} cm too long — ` +
-      `${cm(fit.tooLong.by / 2)} cm over each end. ` +
-      (bigger ? `Shape it shorter, or move to a ${panLabel(bigger)}.` : `Shape it shorter.`);
-    renderLegend(m, isRod
-      ? `${cm(m.footprint.l)} cm long · pan takes ${cm(fit.tooLong.limit)} cm`
-      : `${cm(m.footprint.d)} cm across · pan takes ${cm(fit.tooLong.limit)} cm`);
+      `Usable space is ${cm(limit)} cm, so it is ${cm(by)} cm too ${isLong ? 'long' : 'wide'} — ` +
+      `${cm(by / 2)} cm over each ${isLong ? 'end' : 'side'}. ` +
+      (bigger ? `${fix}, or move to a ${panLabel(bigger)}.` : `${fix}.`);
+    renderLegend(m, `${cm(across)} cm ${isLong ? 'long' : 'across'} · pan takes ${cm(limit)} cm`);
     return;
   }
 
@@ -609,7 +611,7 @@ function tableRows(rows, maxPct) {
       <td class="p">${Formula.round(r.pctOfFlour, r.pctOfFlour < 1 ? 2 : 1)}%</td>
       <td class="bar"><div class="bar-track">
         <div class="bar-fill" data-kind="${r.kind}"
-             style="width:${Math.min(100, (r.pctOfFlour / maxPct) * 100)}%"></div>
+             data-width="${Math.min(100, (r.pctOfFlour / maxPct) * 100)}%"></div>
       </div></td>
     </tr>`).join('');
 }
@@ -663,6 +665,7 @@ function renderFormula(m) {
     </div>`;
 
   $('formulaTables').innerHTML = html;
+  applyDataStyles($('formulaTables'));
   $('statDough').textContent = `${g(f.totalDough)} g`;
   $('statFlour').textContent = `${g(f.totalFlour)} g`;
 
@@ -711,7 +714,7 @@ function renderSchedule(m) {
   /* Bar and captions share the flex ratio, so they track each other wherever
      the captions have room. Only segments with room to spare carry a label. */
   const bar = f.steps.map(s =>
-    `<div class="tl-seg" data-kind="${s.kind}" style="--w:${s.minutes}">
+    `<div class="tl-seg" data-kind="${s.kind}" data-w="${s.minutes}">
        ${s.minutes / total > 0.17 ? s.label : ''}
      </div>`).join('');
 
@@ -722,7 +725,7 @@ function renderSchedule(m) {
   const items = f.steps.map(s => {
     const at = clockFrom(state.startTime, acc);
     acc += s.minutes;
-    return `<div class="tl-item" data-kind="${s.kind}" style="--w:${s.minutes}"
+    return `<div class="tl-item" data-kind="${s.kind}" data-w="${s.minutes}"
                  title="${s.label} — ${dur(s.minutes)}, from ${at}">
       <span class="t">${at}</span>
       <span class="l">${s.label}</span>
@@ -750,6 +753,7 @@ function renderSchedule(m) {
        <span class="l">Out of the oven</span>
        <span class="d">${dur(total)} in total</span>
      </div>`;
+  applyDataStyles($('timeline'));
 
   $('statTotalTime').textContent = dur(total);
   $('statTotalTimeNote').textContent = f.aheadMinutes
@@ -790,7 +794,6 @@ function renderHero() {
 }
 
 function render() {
-  const r = recipe();
   renderHero();
   renderRail();
   renderHydration();
@@ -885,8 +888,14 @@ $('pffRange').addEventListener('input', e => {
 });
 
 $('panSelect').addEventListener('change', e => { state.panId = e.target.value; render(); });
-$('panW').addEventListener('input', e => { state.customW = +e.target.value || 46; render(); });
-$('panH').addEventListener('input', e => { state.customH = +e.target.value || 33; render(); });
+/* Held to the box's own min and max: every keystroke renders, and a half-typed
+   "6" or a stray "-" would otherwise become a pan with negative usable area. */
+const panDim = (input, fallback) => {
+  const v = +input.value;
+  return v > 0 ? Math.min(+input.max, Math.max(+input.min, v)) : fallback;
+};
+$('panW').addEventListener('input', e => { state.customW = panDim(e.target, 46); render(); });
+$('panH').addEventListener('input', e => { state.customH = panDim(e.target, 33); render(); });
 
 $('touchSwitch').addEventListener('change', e => { state.letTouch = e.target.checked; render(); });
 $('startTime').addEventListener('input', e => { state.startTime = e.target.value || '08:00'; render(); });

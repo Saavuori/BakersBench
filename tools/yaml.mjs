@@ -13,7 +13,10 @@
  *   - item          (sequences, including sequences of maps)
  *   key: [1, 2, 3]  (flow sequences of scalars)
  *   key: |          (literal block scalar — newlines kept)
- *   key: >          (folded block scalar — newlines become spaces)
+ *   key: >          (folded block scalar — newlines become spaces, a blank
+ *                    line becomes a newline)
+ *   Block scalar bodies are taken verbatim: a # or a quote in them is text.
+ *   The trailing newline is never kept, so | and |- read the same.
  *   scalars: plain, 'single', "double", 123, 1.5, true, false, null, ~
  *
  * NOT SUPPORTED (throws)
@@ -100,14 +103,33 @@ function stripComment(line, lineNo) {
 export function parse(text) {
   if (text.includes('\n---')) throw new YamlError('multiple documents are not supported');
 
+  const raw = text.split(/\r?\n/);
   const lines = [];
-  text.split(/\r?\n/).forEach((raw, i) => {
-    const lineNo = i + 1;
-    if (/^\s*\t/.test(raw)) throw new YamlError('tabs cannot be used for indentation', lineNo);
-    const stripped = stripComment(raw, lineNo);
-    if (stripped.trim() === '' || stripped.trim() === '---') return;
-    lines.push({ indent: stripped.match(/^ */)[0].length, text: stripped.trim(), lineNo });
-  });
+  const noTabs = i => {
+    if (/^\s*\t/.test(raw[i])) throw new YamlError('tabs cannot be used for indentation', i + 1);
+  };
+  for (let i = 0; i < raw.length; i++) {
+    noTabs(i);
+    const stripped = stripComment(raw[i], i + 1);
+    if (stripped.trim() === '' || stripped.trim() === '---') continue;
+    const line = { indent: stripped.match(/^ */)[0].length, text: stripped.trim(), lineNo: i + 1 };
+    lines.push(line);
+
+    /* A block scalar's body is prose, not YAML. Take it raw, before comment
+       stripping, so "tin #2" keeps its "#2", an apostrophe cannot open a
+       quote, and the blank lines between paragraphs survive. */
+    if (/^(?:- )?[^:]+:\s+[|>]-?$/.test(line.text)) {
+      const keyIndent = line.indent + (line.text.startsWith('- ') ? 2 : 0);
+      const body = [];
+      while (i + 1 < raw.length &&
+             (raw[i + 1].trim() === '' || raw[i + 1].match(/^ */)[0].length > keyIndent)) {
+        i++;
+        noTabs(i);
+        body.push(raw[i]);
+      }
+      line.block = body;
+    }
+  }
 
   if (!lines.length) return {};
   const [value, next] = parseBlock(lines, 0, lines[0].indent);
@@ -136,9 +158,8 @@ function parseMap(lines, i, indent) {
     if (key in out) throw new YamlError(`duplicate key "${key}"`, line.lineNo);
 
     if (rest === '|' || rest === '>' || rest === '|-' || rest === '>-') {
-      const [value, next] = parseBlockScalar(lines, i + 1, indent, rest);
-      out[key] = value;
-      i = next;
+      out[key] = blockScalar(line.block ?? [], rest, line.lineNo);
+      i++;
     } else if (rest === '') {
       // Either a nested block, or an explicitly empty value.
       if (i + 1 < lines.length && lines[i + 1].indent > indent) {
@@ -192,7 +213,7 @@ function parseSequence(lines, i, indent) {
     // with the text after the dash.
     if (/^[^:]+:(\s|$)/.test(rest)) {
       const inner = indent + 2;
-      const synthetic = [{ indent: inner, text: rest, lineNo: line.lineNo }];
+      const synthetic = [{ ...line, indent: inner, text: rest }];
       let j = i + 1;
       while (j < lines.length && lines[j].indent > indent) { synthetic.push(lines[j]); j++; }
       const [value, consumed] = parseMap(synthetic, 0, inner);
@@ -210,14 +231,28 @@ function parseSequence(lines, i, indent) {
   return [out, i];
 }
 
-function parseBlockScalar(lines, i, parentIndent, style) {
-  const body = [];
-  while (i < lines.length && lines[i].indent > parentIndent) {
-    body.push(lines[i].text);
-    i++;
+function blockScalar(body, style, lineNo) {
+  const rows = [...body];
+  while (rows.length && rows.at(-1).trim() === '') rows.pop();
+  if (!rows.length) return '';
+
+  /* The first line sets the indentation; deeper lines keep their extra. */
+  const indent = rows.find(r => r.trim() !== '').match(/^ */)[0].length;
+  const text = rows.map((r, n) => {
+    if (r.trim() === '') return '';
+    if (r.match(/^ */)[0].length < indent) {
+      throw new YamlError('block scalar line is indented less than its first line', lineNo + n + 1);
+    }
+    return r.slice(indent).trimEnd();
+  });
+
+  if (style.startsWith('|')) return text.join('\n');
+  let out = '';
+  for (const r of text) {
+    if (r === '') out += '\n';
+    else out += (out && !out.endsWith('\n') ? ' ' : '') + r;
   }
-  const folded = style.startsWith('>') ? body.join(' ') : body.join('\n');
-  return [style.endsWith('-') ? folded.trimEnd() : folded, i];
+  return out;
 }
 
 /* ── Writer ───────────────────────────────────────────────────────────── */

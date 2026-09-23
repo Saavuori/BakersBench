@@ -60,6 +60,18 @@ for (const script of scripts) {
   }
 }
 
+/* ── 5. No inline style attributes in generated markup ──────────────────── */
+/* The container's CSP is `style-src 'self'`, which silently drops style=""
+   attributes: the timeline and ingredient bars lose their widths and nothing
+   errors outside the console. Set such values through the CSSOM instead. */
+for (const script of scripts) {
+  read(script).split('\n').forEach((line, i) => {
+    if (/\sstyle="/.test(line)) {
+      fail(`${script}:${i + 1} writes a style="" attribute, which the CSP blocks`);
+    }
+  });
+}
+
 console.log(
   failures
     ? `\n${failures} problem(s) found.`
