@@ -4,6 +4,29 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **The container stripped every inline style.** Its CSP (`style-src 'self'`)
+  blocks `style=""` attributes, so served from Docker the schedule segments were
+  all one width and every baker's-percentage bar was full. Values now go through
+  the CSSOM, and `check-assets` fails on any `style=""` in the scripts.
+- **"Fit my pan" failed its own pan on a round Dutch oven or stone**, reporting
+  "0 cm too long". The length is now the longest rod that fits as a chord.
+- **Overhangs could read as zero or negative**, and a too-wide piece was called
+  "too long". The verdict now says which dimension fails, in the singular.
+- **Custom pan sizes** are held to the inputs' own limits, so a half-typed
+  value no longer draws a pan with negative area.
+- **Poolish and biga totals left out their yeast**, so the preferment rows added
+  up to more than the "Ripe" line and the dough weighed up to ~0.8 g over.
+- **Recipe prose lost text after a `#`**, and paragraph breaks, in YAML block
+  scalars; a quote wrapping onto the next line was rejected.
+- **Baguettes laid front to back were drawn without scores.**
+- **`install.sh`, `install.ps1` and `serve.py` only worked from the app folder**,
+  `install.sh` printed "0 / all checks passed", and `install.ps1` crashed on
+  Windows PowerShell when Docker was installed but not running.
+
 ## [1.0.0] — 2026-08-07
 
 First public release.
