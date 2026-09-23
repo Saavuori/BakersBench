@@ -28,6 +28,19 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $AppDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+# The tests and the server run against the app's own folder, not the caller's.
+Set-Location $AppDir
+
+# Windows PowerShell turns a native command's stderr into a terminating error
+# while ErrorActionPreference is Stop, so `docker info` with the daemon down
+# killed the script at the very check meant to detect that. Judge native
+# commands by their exit code instead.
+function Invoke-Native {
+    param([scriptblock]$Command)
+    $saved = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try { & $Command; $LASTEXITCODE -eq 0 } finally { $ErrorActionPreference = $saved }
+}
 
 function Write-Ok   { param($m) Write-Host "  [ok] $m"   -ForegroundColor Green }
 function Write-Warn { param($m) Write-Host "  [--] $m"   -ForegroundColor Yellow }
@@ -43,8 +56,7 @@ $hasNode = Test-Tool node
 $hasPy = Test-Tool python
 $hasDocker = $false
 if (Test-Tool docker) {
-    docker info *> $null
-    if ($?) { $hasDocker = $true }
+    $hasDocker = Invoke-Native { docker info *> $null }
 }
 
 if ($hasNode) { Write-Ok "node   $(node --version)" } else { Write-Warn "node not found (needed only for tests)" }
@@ -56,10 +68,9 @@ if ($hasNode) {
     Write-Host ""
     Write-Host "  Running the test suite..."
     $log = Join-Path $env:TEMP 'bb-test.log'
-    & node --test *> $log
-    if ($LASTEXITCODE -eq 0) {
-        $passed = (Select-String -Path $log -Pattern '^ok ' -AllMatches).Count
-        Write-Ok "test suite passed"
+    if (Invoke-Native { & node --test --test-reporter=tap *> $log }) {
+        $passed = (Select-String -Path $log -Pattern '^# pass (\d+)').Matches.Groups[1].Value
+        Write-Ok "$passed checks passed"
     }
     else {
         Get-Content $log -Tail 30

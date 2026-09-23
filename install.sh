@@ -37,6 +37,10 @@ have() { command -v "$1" >/dev/null 2>&1; }
 
 printf '\nBaker'"'"'s Bench\n\n'
 
+# Everything below (the tests, the server) runs against the app's own folder,
+# not wherever the script was called from.
+cd "$APP_DIR"
+
 # ── Toolchain ────────────────────────────────────────────────────────────────
 HAS_NODE=0; HAS_PY=0; HAS_DOCKER=0
 have node   && { HAS_NODE=1;   ok "node   $(node --version)"; }   || warn "node not found (needed only for tests)"
@@ -52,10 +56,14 @@ PY=python3; have python3 || PY=python
 if [ "$HAS_NODE" = 1 ]; then
   echo
   say "Running the test suite…"
-  if node --test >/tmp/bb-test.log 2>&1; then
-    ok "$(grep -c '^✔' /tmp/bb-test.log || echo 'all') checks passed"
+  LOG="$(mktemp)"
+  # TAP explicitly: the default reporter depends on whether stdout is a
+  # terminal, and the summary line is the one stable thing to count from.
+  if node --test --test-reporter=tap >"$LOG" 2>&1; then
+    ok "$(sed -n 's/^# pass //p' "$LOG") checks passed"
+    rm -f "$LOG"
   else
-    tail -30 /tmp/bb-test.log
+    tail -30 "$LOG"
     die "Tests failed. The formulas may be wrong — not starting."
   fi
 fi

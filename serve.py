@@ -7,6 +7,7 @@ file, which makes it look like your change did nothing.
     python serve.py [port]
 """
 
+import os
 import sys
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -27,6 +28,9 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
 
 if __name__ == '__main__':
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 5178
-    handler = partial(NoCacheHandler, directory='.')
+    # The app's own folder, not the caller's: install.sh and install.ps1 run
+    # this by path, from wherever the user happens to be.
+    root = os.path.dirname(os.path.abspath(__file__))
+    handler = partial(NoCacheHandler, directory=root)
     print('Baker\'s Bench on http://localhost:%d  (no-cache)' % port)
     ThreadingHTTPServer(('127.0.0.1', port), handler).serve_forever()
