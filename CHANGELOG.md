@@ -6,6 +6,17 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Changed
+
+- **The pan is always the euro oven tray (44 × 37 cm).** The baking-sheet picker
+  and custom size inputs are gone; the pan card names the tray instead.
+- **Baguettes are always shaped to fit the pan**, so the size picker is hidden
+  for them. Three tray-length baguettes is the new default count — four do not
+  fit on a euro tray at 4 cm apart.
+- **Baguette opens by default**, and your selections — bread, count, leavening,
+  prefermented flour, hydration, thickness, touching and start time — are
+  remembered per bread in this browser.
+
 ### Fixed
 
 - **The container stripped every inline style.** Its CSP (`style-src 'self'`)

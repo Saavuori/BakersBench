@@ -80,6 +80,7 @@ sizes:
   - id: fit
     label: Fit my pan
     fit_to_pan: true
+    default: true
   - id: demi
     label: Demi
     g: 210
@@ -88,12 +89,12 @@ sizes:
     label: Full batch
     g: 425
     length: 40
-    default: true
 
 counts:
-  # Four 425 g pieces is the batch as published, so that is what opens.
+  # Opens on "Fit my pan": three tray-length baguettes, 4 cm apart, are what a
+  # 44 × 37 cm euro tray holds. (The published batch is four 425 g pieces.)
   quick: [2, 3, 4]
-  default: 4
+  default: 3
 
 # ---- Timing ----
 schedule:
