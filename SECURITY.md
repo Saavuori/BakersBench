@@ -5,8 +5,8 @@
 Baker's Bench is a static client-side calculator. That shapes the whole picture:
 
 - **No backend.** Nothing to authenticate against, no database, no API.
-- **No user accounts, no personal data.** The only thing stored is a theme
-  preference in `localStorage`.
+- **No user accounts, no personal data.** The only things stored are the theme
+  and the last bake selections, in `localStorage`.
 - **No network requests at runtime.** No fonts, no CDNs, no analytics, no
   telemetry. Once the page has loaded, it never talks to anything again.
 - **No runtime dependencies.** `dependencies` and `devDependencies` are both

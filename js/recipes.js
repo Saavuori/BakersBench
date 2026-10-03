@@ -314,12 +314,12 @@ const RECIPES = [
       canTouch: false
     },
     sizes: [
-      { id: 'fit', label: 'Fit my pan', fitToPan: true },
+      { id: 'fit', label: 'Fit my pan', fitToPan: true, default: true },
       { id: 'demi', label: 'Demi', g: 210, length: 32 },
-      { id: 'full', label: 'Full batch', g: 425, length: 40, default: true }
+      { id: 'full', label: 'Full batch', g: 425, length: 40 }
     ],
     quickCounts: [2, 3, 4],
-    defaultCount: 4,
+    defaultCount: 3,
     schedule: { mix: 2, bulk: { direct: 540, preferment: 110 }, shape: 3, proof: 15 },
     bake: {
       temp: '250°C',

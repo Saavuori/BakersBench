@@ -5,15 +5,16 @@ const PAD = 26;  // svg units of breathing room around the pan
 
 const $ = id => document.getElementById(id);
 
+/* Every bake here goes on the one tray this oven has, so the pan is fixed
+   rather than offered as a choice. */
+const PAN_ID = 'euro';
+
 const state = {
-  recipeId: 'burger-buns',
+  recipeId: 'baguette',
   sizeId: null,
-  count: 8,
+  count: 4,
   leavenId: null,
   pff: 0.2,
-  panId: 'half',
-  customW: 46,
-  customH: 33,
   letTouch: false,
   thicknessId: null,
   hydration: null,   // null = whatever the recipe says
@@ -72,18 +73,21 @@ function resolveSize(size, pan) {
   };
 }
 
+/* A bread that can be shaped to the pan always is — with one fixed tray there
+   is no reason to bake it shorter than the tray allows. */
+const fitSizeOf = r => r.sizes.find(s => s.fitToPan);
+
 function currentSize() {
   const r = recipe();
   if (!r.sizes.length) return null;
-  const raw = r.sizes.find(s => s.id === state.sizeId)
+  const raw = fitSizeOf(r)
+    || r.sizes.find(s => s.id === state.sizeId)
     || r.sizes.find(s => s.default) || r.sizes[0];
   return resolveSize(raw);
 }
 
 function currentPan() {
-  const p = PANS.find(x => x.id === state.panId) || PANS[1];
-  if (p.custom) return { ...p, w: state.customW, h: state.customH, type: 'rect' };
-  return p;
+  return PANS.find(x => x.id === PAN_ID);
 }
 
 function currentThickness() {
@@ -94,8 +98,6 @@ function currentThickness() {
 
 const g = n => Formula.weigh(n).toLocaleString('en-US');
 
-/* "Euro oven tray — 44 × 37 cm" reads badly mid-sentence; keep just the name. */
-const panLabel = p => p.name.split('—')[0].trim().toLowerCase();
 const cm = n => (Math.round(n * 10) / 10).toFixed(1).replace(/\.0$/, '');
 const panSpec = p => p.type === 'round' ? `${cm(p.d)} cm round` : `${cm(p.w)} × ${cm(p.h)} cm`;
 
@@ -161,6 +163,7 @@ function renderSizes() {
   const r = recipe();
   const isSlab = r.shape.type === 'slab';
   $('sizeField').hidden = isSlab || !r.sizes.length;
+  $('sizeSeg').hidden = !!fitSizeOf(r);
   $('countField').hidden = isSlab;
   $('thicknessField').hidden = !isSlab;
 
@@ -245,13 +248,6 @@ function renderHydration() {
 
 function renderPanControls() {
   const pan = currentPan();
-  $('panSelect').innerHTML = PANS.map(p =>
-    `<option value="${p.id}" ${p.id === state.panId ? 'selected' : ''}>${p.name}</option>`).join('');
-  $('customPanField').hidden = state.panId !== 'custom';
-  /* Keep the boxes showing the real state, but never while they're being typed in. */
-  if (document.activeElement !== $('panW')) $('panW').value = state.customW;
-  if (document.activeElement !== $('panH')) $('panH').value = state.customH;
-
   const r = recipe();
   const wrap = $('touchSwitchWrap');
   wrap.hidden = !r.shape.canTouch;
@@ -262,7 +258,7 @@ function renderPanControls() {
       ? 'Pull-apart rolls with soft, pale sides'
       : `${cm(r.shape.gapWhenSeparate ?? r.shape.gap)} cm apart — crust all the way round`;
   }
-  $('panSpec').textContent = panSpec(pan);
+  $('panSpec').textContent = `${pan.name.split('—')[0].trim()} · ${panSpec(pan)}`;
 }
 
 /* ── Model ───────────────────────────────────────────────────────────── */
@@ -479,7 +475,7 @@ function drawPan(m) {
 /* Largest alternative that is smaller than the current pick and still fits. */
 function smallerSizeThatFits(m) {
   const r = m.r;
-  if (!m.size || !r.sizes.length) return null;
+  if (!m.size || !r.sizes.length || fitSizeOf(r)) return null;
   const cands = r.sizes
     .map(s => resolveSize(s, m.pan))
     .filter(s => s.g < m.size.g)
@@ -487,19 +483,6 @@ function smallerSizeThatFits(m) {
   for (const s of cands) {
     const res = Packing.fit({ pan: m.pan, footprint: footprintFor(s), gap: m.gap, requested: m.count });
     if (res.fits) return { size: s, capacity: res.capacity };
-  }
-  return null;
-}
-
-function biggerPanThatFits(m) {
-  const areaOf = p => p.type === 'round' ? Math.PI * (p.d / 2) ** 2 : p.w * p.h;
-  const here = areaOf(m.pan);
-  const bigger = PANS
-    .filter(p => !p.custom && p.type === 'rect' && areaOf(p) > here)
-    .sort((a, b) => areaOf(a) - areaOf(b));
-  for (const p of bigger) {
-    const res = Packing.fit({ pan: p, footprint: m.footprint, gap: m.gap, requested: m.count });
-    if (res.fits) return p;
   }
   return null;
 }
@@ -549,12 +532,10 @@ function renderVerdict(m) {
     $('verdictLine').textContent = isLong
       ? `A ${cm(across)} cm ${r.unit.one} is too long for this pan`
       : `One ${cm(across)} cm ${r.unit.one} is wider than this pan`;
-    const bigger = biggerPanThatFits(m);
-    const fix = isLong ? 'Shape it shorter' : 'Shape it smaller';
     $('verdictSub').textContent =
       `Usable space is ${cm(limit)} cm, so it is ${cm(by)} cm too ${isLong ? 'long' : 'wide'} — ` +
       `${cm(by / 2)} cm over each ${isLong ? 'end' : 'side'}. ` +
-      (bigger ? `${fix}, or move to a ${panLabel(bigger)}.` : `${fix}.`);
+      `${isLong ? 'Shape it shorter' : 'Shape it smaller'}.`;
     renderLegend(m, `${cm(across)} cm ${isLong ? 'long' : 'across'} · pan takes ${cm(limit)} cm`);
     return;
   }
@@ -581,7 +562,6 @@ function renderVerdict(m) {
 
   /* Offer the two most useful ways out, not every one that exists. */
   const alt = smallerSizeThatFits(m);
-  const bigger = biggerPanThatFits(m);
   const fixes = [];
   if (alt) fixes.push(alt.size.fitToPan
     ? `let the pan set the size (${alt.size.g} g each)`
@@ -592,7 +572,6 @@ function renderVerdict(m) {
     });
     if (touching.fits) fixes.push(`let them touch`);
   }
-  if (bigger) fixes.push(`move to a ${panLabel(bigger)}`);
 
   $('verdictSub').textContent =
     `You asked for ${count}. Bake the other ${fit.overflow} on a second pan` +
@@ -806,6 +785,51 @@ function render() {
   renderVerdict(m);
   renderFormula(m);
   renderSchedule(m);
+  saveSelections();
+}
+
+/* ── Remembered selections ───────────────────────────────────────────── */
+
+/* Kept per bread, so switching to pizza and back does not cost the baguette
+   its leavening or count. Like the theme, it lives only in this browser. */
+const SAVE_KEY = 'bakers-bench-selections';
+
+function loadSaved() {
+  try {
+    const v = JSON.parse(localStorage.getItem(SAVE_KEY));
+    if (v && typeof v === 'object' && v.breads && typeof v.breads === 'object') return v;
+  } catch (_) {}
+  return { recipeId: null, startTime: null, breads: {} };
+}
+const saved = loadSaved();
+
+function saveSelections() {
+  saved.recipeId = state.recipeId;
+  saved.startTime = state.startTime;
+  saved.breads[state.recipeId] = {
+    sizeId: state.sizeId, count: state.count, leavenId: state.leavenId, pff: state.pff,
+    letTouch: state.letTouch, thicknessId: state.thicknessId, hydration: state.hydration
+  };
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(saved)); } catch (_) {}
+}
+
+/* Stored values are only trusted once they match the current data: a bread,
+   size or leavening may have been renamed or removed since they were saved. */
+function restoreSelections(r) {
+  const s = saved.breads[r.id];
+  if (!s) return;
+  if (r.sizes.some(x => x.id === s.sizeId)) state.sizeId = s.sizeId;
+  if (r.shape.thicknesses && r.shape.thicknesses.some(t => t.id === s.thicknessId))
+    state.thicknessId = s.thicknessId;
+  if (Number.isInteger(s.count) && s.count >= 1 && s.count <= 200) state.count = s.count;
+  if (LEAVENS.some(l => l.id === s.leavenId)) { state.leavenId = s.leavenId; syncPff(); }
+  const l = leaven();
+  if (l.kind === 'preferment' && typeof s.pff === 'number')
+    state.pff = Math.max(l.pffRange[0] / 100, Math.min(l.pffRange[1] / 100, s.pff));
+  if (r.shape.canTouch && typeof s.letTouch === 'boolean') state.letTouch = s.letTouch;
+  const { min, max } = hydrationRange(r);
+  if (typeof s.hydration === 'number' && s.hydration >= min && s.hydration <= max)
+    state.hydration = s.hydration;
 }
 
 /* ── Recipe switching ────────────────────────────────────────────────── */
@@ -823,6 +847,7 @@ function selectRecipe(id) {
   state.letTouch = !!r.shape.touchDefault;
   state.hydration = null;   // back to whatever the recipe says
   syncPff();
+  restoreSelections(r);
   render();
 }
 
@@ -887,16 +912,6 @@ $('pffRange').addEventListener('input', e => {
   render();
 });
 
-$('panSelect').addEventListener('change', e => { state.panId = e.target.value; render(); });
-/* Held to the box's own min and max: every keystroke renders, and a half-typed
-   "6" or a stray "-" would otherwise become a pan with negative usable area. */
-const panDim = (input, fallback) => {
-  const v = +input.value;
-  return v > 0 ? Math.min(+input.max, Math.max(+input.min, v)) : fallback;
-};
-$('panW').addEventListener('input', e => { state.customW = panDim(e.target, 46); render(); });
-$('panH').addEventListener('input', e => { state.customH = panDim(e.target, 33); render(); });
-
 $('touchSwitch').addEventListener('change', e => { state.letTouch = e.target.checked; render(); });
 $('startTime').addEventListener('input', e => { state.startTime = e.target.value || '08:00'; render(); });
 
@@ -922,6 +937,8 @@ window.addEventListener('resize', updateRailFade);
 /* Go */
 Timer.init();
 buildRail();
-selectRecipe('burger-buns');
-state.count = 8;
-render();
+if (/^\d\d:\d\d$/.test(saved.startTime)) {
+  state.startTime = saved.startTime;
+  $('startTime').value = saved.startTime;
+}
+selectRecipe(RECIPES.some(r => r.id === saved.recipeId) ? saved.recipeId : 'baguette');
